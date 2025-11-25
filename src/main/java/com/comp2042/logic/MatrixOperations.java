@@ -98,4 +98,30 @@ public class MatrixOperations {
         return list.stream().map(MatrixOperations::copy).collect(Collectors.toList());
     }
 
+    /**
+     * Rotates a 2D matrix 90 degrees clockwise.
+     * For a matrix of size rows x cols, returns a new matrix of size cols x rows.
+     * 
+     * @param matrix the matrix to rotate
+     * @return a new matrix rotated 90 degrees clockwise
+     */
+    public static int[][] rotate90(int[][] matrix) {
+        if (matrix == null || matrix.length == 0) {
+            return new int[0][0];
+        }
+        
+        int rows = matrix.length;
+        int cols = matrix[0].length;
+        int[][] rotated = new int[cols][rows];
+        
+        // Rotate 90 degrees clockwise: new[i][j] = original[rows-1-j][i]
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                rotated[j][rows - 1 - i] = matrix[i][j];
+            }
+        }
+        
+        return rotated;
+    }
+
 }

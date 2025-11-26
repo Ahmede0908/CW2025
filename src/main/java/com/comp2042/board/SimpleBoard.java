@@ -1,5 +1,6 @@
 package com.comp2042.board;
 
+import com.comp2042.logic.CollisionHandler;
 import com.comp2042.logic.MatrixOperations;
 import com.comp2042.logic.NextShapeInfo;
 import com.comp2042.model.Brick;
@@ -42,7 +43,7 @@ public class SimpleBoard implements Board {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
         Point p = new Point(currentOffset);
         p.translate(0, 1);
-        boolean conflict = MatrixOperations.intersect(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
         if (conflict) {
             return false;
         } else {
@@ -57,7 +58,7 @@ public class SimpleBoard implements Board {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
         Point p = new Point(currentOffset);
         p.translate(-1, 0);
-        boolean conflict = MatrixOperations.intersect(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
         if (conflict) {
             return false;
         } else {
@@ -71,7 +72,7 @@ public class SimpleBoard implements Board {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
         Point p = new Point(currentOffset);
         p.translate(1, 0);
-        boolean conflict = MatrixOperations.intersect(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
         if (conflict) {
             return false;
         } else {
@@ -88,7 +89,7 @@ public class SimpleBoard implements Board {
         
         // SimpleBoard is responsible ONLY for validation (collision + bounds checking)
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        boolean conflict = MatrixOperations.intersect(currentMatrix, rotatedShapeMatrix, (int) currentOffset.getX(), (int) currentOffset.getY());
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, rotatedShapeMatrix, (int) currentOffset.getX(), (int) currentOffset.getY());
         
         // If rotation is valid, apply the rotated shape returned by brickRotator
         if (conflict) {
@@ -119,7 +120,7 @@ public class SimpleBoard implements Board {
         }
         
         currentOffset = new Point(spawnX, spawnY);
-        return MatrixOperations.intersect(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
+        return CollisionHandler.hasCollision(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
     }
 
     @Override

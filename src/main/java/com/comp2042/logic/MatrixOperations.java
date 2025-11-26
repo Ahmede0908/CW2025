@@ -1,10 +1,5 @@
 package com.comp2042.logic;
 
-import com.comp2042.model.ClearRow;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,43 +47,6 @@ public class MatrixOperations {
             }
         }
         return copy;
-    }
-
-    /**
-     * Checks and removes completed rows from the matrix.
-     * Matrix indexing: matrix[row][column]
-     */
-    public static ClearRow checkRemoving(final int[][] matrix) {
-        int[][] tmp = new int[matrix.length][matrix[0].length];
-        Deque<int[]> newRows = new ArrayDeque<>();
-        List<Integer> clearedRows = new ArrayList<>();
-
-        // matrix[row][column] - i is row, j is column
-        for (int i = 0; i < matrix.length; i++) {  // i = row
-            int[] tmpRow = new int[matrix[i].length];
-            boolean rowToClear = true;
-            for (int j = 0; j < matrix[0].length; j++) {  // j = column
-                if (matrix[i][j] == 0) {
-                    rowToClear = false;
-                }
-                tmpRow[j] = matrix[i][j];
-            }
-            if (rowToClear) {
-                clearedRows.add(i);
-            } else {
-                newRows.add(tmpRow);
-            }
-        }
-        for (int i = matrix.length - 1; i >= 0; i--) {
-            int[] row = newRows.pollLast();
-            if (row != null) {
-                tmp[i] = row;
-            } else {
-                break;
-            }
-        }
-        int scoreBonus = 50 * clearedRows.size() * clearedRows.size();
-        return new ClearRow(clearedRows.size(), tmp, scoreBonus);
     }
 
     public static List<int[][]> deepCopyList(List<int[][]> list){

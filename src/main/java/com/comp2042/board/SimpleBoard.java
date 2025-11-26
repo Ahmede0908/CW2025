@@ -4,6 +4,7 @@ import com.comp2042.logic.CollisionHandler;
 import com.comp2042.logic.MatrixOperations;
 import com.comp2042.logic.MovementHandler;
 import com.comp2042.logic.NextShapeInfo;
+import com.comp2042.logic.RowClearer;
 import com.comp2042.model.Brick;
 import com.comp2042.model.BrickGenerator;
 import com.comp2042.model.ClearRow;
@@ -138,10 +139,9 @@ public class SimpleBoard implements Board {
 
     @Override
     public ClearRow clearRows() {
-        ClearRow clearRow = MatrixOperations.checkRemoving(currentGameMatrix);
+        ClearRow clearRow = RowClearer.clear(currentGameMatrix);
         currentGameMatrix = clearRow.getNewMatrix();
         return clearRow;
-
     }
 
     @Override

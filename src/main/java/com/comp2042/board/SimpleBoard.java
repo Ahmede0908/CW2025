@@ -2,6 +2,7 @@ package com.comp2042.board;
 
 import com.comp2042.logic.CollisionHandler;
 import com.comp2042.logic.MatrixOperations;
+import com.comp2042.logic.MovementHandler;
 import com.comp2042.logic.NextShapeInfo;
 import com.comp2042.model.Brick;
 import com.comp2042.model.BrickGenerator;
@@ -41,13 +42,12 @@ public class SimpleBoard implements Board {
     @Override
     public boolean moveBrickDown() {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        Point p = new Point(currentOffset);
-        p.translate(0, 1);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
+        Point newOffset = MovementHandler.moveDown(currentOffset);
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) newOffset.getX(), (int) newOffset.getY());
         if (conflict) {
             return false;
         } else {
-            currentOffset = p;
+            currentOffset = newOffset;
             return true;
         }
     }
@@ -56,13 +56,12 @@ public class SimpleBoard implements Board {
     @Override
     public boolean moveBrickLeft() {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        Point p = new Point(currentOffset);
-        p.translate(-1, 0);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
+        Point newOffset = MovementHandler.moveLeft(currentOffset);
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) newOffset.getX(), (int) newOffset.getY());
         if (conflict) {
             return false;
         } else {
-            currentOffset = p;
+            currentOffset = newOffset;
             return true;
         }
     }
@@ -70,13 +69,12 @@ public class SimpleBoard implements Board {
     @Override
     public boolean moveBrickRight() {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        Point p = new Point(currentOffset);
-        p.translate(1, 0);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) p.getX(), (int) p.getY());
+        Point newOffset = MovementHandler.moveRight(currentOffset);
+        boolean conflict = CollisionHandler.hasCollision(currentMatrix, brickRotator.getCurrentShape(), (int) newOffset.getX(), (int) newOffset.getY());
         if (conflict) {
             return false;
         } else {
-            currentOffset = p;
+            currentOffset = newOffset;
             return true;
         }
     }

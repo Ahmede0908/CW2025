@@ -11,20 +11,27 @@ import com.comp2042.view.ViewData;
 
 import java.awt.*;
 
+/**
+ * SimpleBoard implements the game board logic.
+ * Coordinate system: x = column, y = row
+ * Matrix: currentGameMatrix[row][col] = currentGameMatrix[y][x]
+ * Offset: currentOffset.x = column, currentOffset.y = row
+ */
 public class SimpleBoard implements Board {
 
     private final int width;
     private final int height;
     private final BrickGenerator brickGenerator;
     private final BrickRotator brickRotator;
-    private int[][] currentGameMatrix;
-    private Point currentOffset;
+    private int[][] currentGameMatrix;  // [rows][cols] = [height][width]
+    private Point currentOffset;  // x = column, y = row
     private final Score score;
 
     public SimpleBoard(int width, int height) {
         this.width = width;
         this.height = height;
-        currentGameMatrix = new int[width][height];
+        // Matrix is row-major: [rows][cols] = [height][width]
+        currentGameMatrix = new int[height][width];
         brickGenerator = new RandomBrickGenerator();
         brickRotator = new BrickRotator();
         score = new Score();
@@ -96,7 +103,22 @@ public class SimpleBoard implements Board {
     public boolean createNewBrick() {
         Brick currentBrick = brickGenerator.getBrick();
         brickRotator.setBrick(currentBrick);
-        currentOffset = new Point(4, 10);
+        
+        // Calculate proper spawn position: top center of the board
+        int[][] brickMatrix = brickRotator.getCurrentShape();
+        int brickWidth = brickMatrix[0].length;
+        int spawnX = (width / 2) - (brickWidth / 2);
+        int spawnY = 0;
+        
+        // Clamp spawnX to stay within [0, width - brickWidth]
+        if (spawnX < 0) {
+            spawnX = 0;
+        }
+        if (spawnX + brickWidth > width) {
+            spawnX = width - brickWidth;
+        }
+        
+        currentOffset = new Point(spawnX, spawnY);
         return MatrixOperations.intersect(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
     }
 
@@ -131,7 +153,7 @@ public class SimpleBoard implements Board {
 
     @Override
     public void newGame() {
-        currentGameMatrix = new int[width][height];
+        currentGameMatrix = new int[height][width];
         score.reset();
         createNewBrick();
     }

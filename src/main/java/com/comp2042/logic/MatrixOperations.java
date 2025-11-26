@@ -16,25 +16,44 @@ public class MatrixOperations {
 
     }
 
+    /**
+     * Checks if a brick intersects with the board matrix.
+     * Matrix indexing: matrix[row][column] = matrix[y][x]
+     * Uses: matrix[y + row][x + col] where row is brick row, col is brick column
+     */
     public static boolean intersect(final int[][] matrix, final int[][] brick, int x, int y) {
-        for (int i = 0; i < brick.length; i++) {
-            for (int j = 0; j < brick[i].length; j++) {
-                int targetX = x + i;
-                int targetY = y + j;
-                if (brick[j][i] != 0 && (checkOutOfBound(matrix, targetX, targetY) || matrix[targetY][targetX] != 0)) {
-                    return true;
+        // x = column, y = row
+        // matrix[row][column] = matrix[y][x]
+        // brick is indexed as brick[row][column]
+        for (int row = 0; row < brick.length; row++) {  // row = brick row
+            for (int col = 0; col < brick[row].length; col++) {  // col = brick column
+                if (brick[row][col] != 0) {
+                    // Check matrix[y + row][x + col]
+                    if (checkOutOfBound(matrix, y + row, x + col) || matrix[y + row][x + col] != 0) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    private static boolean checkOutOfBound(int[][] matrix, int targetX, int targetY) {
-        boolean returnValue = true;
-        if (targetX >= 0 && targetY < matrix.length && targetX < matrix[targetY].length) {
-            returnValue = false;
+    /**
+     * Checks if coordinates are out of bounds.
+     * Matrix indexing: matrix[row][column]
+     * Bounds: row < matrix.length, column < matrix[0].length
+     */
+    private static boolean checkOutOfBound(int[][] matrix, int targetRow, int targetCol) {
+        // targetRow = row index, targetCol = column index
+        // matrix[row][column] = matrix[targetRow][targetCol]
+        // Bounds: row < matrix.length, column < matrix[0].length
+        if (targetRow < 0 || targetRow >= matrix.length) {
+            return true;
         }
-        return returnValue;
+        if (targetCol < 0 || targetCol >= matrix[0].length) {
+            return true;
+        }
+        return false;
     }
 
     public static int[][] copy(int[][] original) {
@@ -48,29 +67,47 @@ public class MatrixOperations {
         return myInt;
     }
 
+    /**
+     * Merges a brick into the board matrix.
+     * Matrix indexing: matrix[row][column] = matrix[y][x]
+     * Uses: matrix[y + row][x + col] where row is brick row, col is brick column
+     */
     public static int[][] merge(int[][] filledFields, int[][] brick, int x, int y) {
         int[][] copy = copy(filledFields);
-        for (int i = 0; i < brick.length; i++) {
-            for (int j = 0; j < brick[i].length; j++) {
-                int targetX = x + i;
-                int targetY = y + j;
-                if (brick[j][i] != 0) {
-                    copy[targetY][targetX] = brick[j][i];
+        // x = column, y = row
+        // matrix[row][column] = matrix[y][x]
+        // brick is indexed as brick[row][column]
+        for (int row = 0; row < brick.length; row++) {  // row = brick row
+            for (int col = 0; col < brick[row].length; col++) {  // col = brick column
+                if (brick[row][col] != 0) {
+                    // Write to matrix[y + row][x + col]
+                    // Bounds check: row < matrix.length, column < matrix[0].length
+                    int targetRow = y + row;
+                    int targetCol = x + col;
+                    if (targetRow >= 0 && targetRow < copy.length &&
+                        targetCol >= 0 && targetCol < copy[0].length) {
+                        copy[targetRow][targetCol] = brick[row][col];
+                    }
                 }
             }
         }
         return copy;
     }
 
+    /**
+     * Checks and removes completed rows from the matrix.
+     * Matrix indexing: matrix[row][column]
+     */
     public static ClearRow checkRemoving(final int[][] matrix) {
         int[][] tmp = new int[matrix.length][matrix[0].length];
         Deque<int[]> newRows = new ArrayDeque<>();
         List<Integer> clearedRows = new ArrayList<>();
 
-        for (int i = 0; i < matrix.length; i++) {
+        // matrix[row][column] - i is row, j is column
+        for (int i = 0; i < matrix.length; i++) {  // i = row
             int[] tmpRow = new int[matrix[i].length];
             boolean rowToClear = true;
-            for (int j = 0; j < matrix[0].length; j++) {
+            for (int j = 0; j < matrix[0].length; j++) {  // j = column
                 if (matrix[i][j] == 0) {
                     rowToClear = false;
                 }

@@ -94,36 +94,78 @@ public class GuiController implements Initializable {
         reflection.setTopOffset(-12);
     }
 
+    /**
+     * Initializes the game view.
+     * Coordinate system: x = column, y = row
+     * Board matrix: board[row][col] = board[y][x]
+     * GridPane: add(node, column, row) = add(node, x, y)
+     */
     public void initGameView(int[][] boardMatrix, ViewData brick) {
-        displayMatrix = new Rectangle[boardMatrix.length][boardMatrix[0].length];
-        for (int i = 2; i < boardMatrix.length; i++) {
-            for (int j = 0; j < boardMatrix[i].length; j++) {
+        // Clear old nodes from gamePanel
+        gamePanel.getChildren().clear();
+        
+        // Clear old nodes from brickPanel
+        brickPanel.getChildren().clear();
+        
+        // boardMatrix is [rows][cols] = [y][x] in Java array notation
+        // x = column, y = row
+        int height = boardMatrix.length;  // rows (y dimension)
+        int width = boardMatrix[0].length;  // cols (x dimension)
+        displayMatrix = new Rectangle[height][width];
+        
+        // Loop: y (row) as outer, x (col) as inner
+        // Map board[y][x] → GridPane column=x row=y
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
                 Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
                 rectangle.setFill(Color.TRANSPARENT);
-                displayMatrix[i][j] = rectangle;
-                gamePanel.add(rectangle, j, i - 2);
+                displayMatrix[y][x] = rectangle;
+                // GridPane.add(node, column, row) = add(node, x, y)
+                gamePanel.add(rectangle, x, y);
             }
         }
 
-        rectangles = new Rectangle[brick.getBrickData().length][brick.getBrickData()[0].length];
-        for (int i = 0; i < brick.getBrickData().length; i++) {
-            for (int j = 0; j < brick.getBrickData()[i].length; j++) {
+        // Initialize brick panel rectangles
+        // brick.getBrickData() is [rows][cols] = [y][x]
+        int brickHeight = brick.getBrickData().length;  // rows (y dimension)
+        int brickWidth = brick.getBrickData()[0].length;  // cols (x dimension)
+        rectangles = new Rectangle[brickHeight][brickWidth];
+        
+        // Loop: y (row) as outer, x (col) as inner
+        // Map brick[y][x] → GridPane column=x row=y
+        for (int y = 0; y < brickHeight; y++) {
+            for (int x = 0; x < brickWidth; x++) {
                 Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
-                rectangle.setFill(getFillColor(brick.getBrickData()[i][j]));
-                rectangles[i][j] = rectangle;
-                brickPanel.add(rectangle, j, i);
+                rectangle.setFill(getFillColor(brick.getBrickData()[y][x]));
+                rectangles[y][x] = rectangle;
+                // GridPane.add(node, column, row) = add(node, x, y)
+                brickPanel.add(rectangle, x, y);
             }
         }
-        brickPanel.setLayoutX(gamePanel.getLayoutX() + brick.getxPosition() * brickPanel.getVgap() + brick.getxPosition() * BRICK_SIZE);
-        brickPanel.setLayoutY(-42 + gamePanel.getLayoutY() + brick.getyPosition() * brickPanel.getHgap() + brick.getyPosition() * BRICK_SIZE);
-
-
+        
+        // Set brick panel position relative to gamePanel
+        updateBrickPanelPosition(brick);
+        
         timeLine = new Timeline(new KeyFrame(
                 Duration.millis(400),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
         ));
         timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
+    }
+
+    /**
+     * Updates the brick panel position relative to gamePanel.
+     * Coordinate system: x = column, y = row
+     * brickPanel must be positioned INSIDE gamePanel
+     */
+    private void updateBrickPanelPosition(ViewData brick) {
+        // x = column, y = row
+        // Position brickPanel relative to gamePanel's position
+        double layoutX = gamePanel.getLayoutX() + brick.getxPosition() * BRICK_SIZE;
+        double layoutY = gamePanel.getLayoutY() + brick.getyPosition() * BRICK_SIZE;
+        brickPanel.setLayoutX(layoutX);
+        brickPanel.setLayoutY(layoutY);
     }
 
     private Paint getFillColor(int i) {
@@ -161,22 +203,42 @@ public class GuiController implements Initializable {
     }
 
 
+    /**
+     * Refreshes the brick visual representation and position.
+     * Coordinate system: x = column, y = row
+     * Brick data: brick[y][x] (Java array notation: [row][col])
+     */
     private void refreshBrick(ViewData brick) {
         if (isPause.getValue() == Boolean.FALSE) {
-            brickPanel.setLayoutX(gamePanel.getLayoutX() + brick.getxPosition() * brickPanel.getVgap() + brick.getxPosition() * BRICK_SIZE);
-            brickPanel.setLayoutY(-42 + gamePanel.getLayoutY() + brick.getyPosition() * brickPanel.getHgap() + brick.getyPosition() * BRICK_SIZE);
-            for (int i = 0; i < brick.getBrickData().length; i++) {
-                for (int j = 0; j < brick.getBrickData()[i].length; j++) {
-                    setRectangleData(brick.getBrickData()[i][j], rectangles[i][j]);
+            // Update brick panel position using clean coordinate translation
+            updateBrickPanelPosition(brick);
+            
+            // Update brick visual representation
+            // brick.getBrickData() is [rows][cols] = [y][x]
+            int brickHeight = brick.getBrickData().length;
+            int brickWidth = brick.getBrickData()[0].length;
+            // Loop: y (row) as outer, x (col) as inner
+            for (int y = 0; y < brickHeight; y++) {
+                for (int x = 0; x < brickWidth; x++) {
+                    setRectangleData(brick.getBrickData()[y][x], rectangles[y][x]);
                 }
             }
         }
     }
 
+    /**
+     * Refreshes the game background.
+     * Coordinate system: x = column, y = row
+     * Board matrix: board[y][x] (Java array notation: [row][col])
+     */
     public void refreshGameBackground(int[][] board) {
-        for (int i = 2; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                setRectangleData(board[i][j], displayMatrix[i][j]);
+        // board is [rows][cols] = [y][x]
+        int height = board.length;  // rows (y dimension)
+        int width = board[0].length;  // cols (x dimension)
+        // Loop: y (row) as outer, x (col) as inner
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                setRectangleData(board[y][x], displayMatrix[y][x]);
             }
         }
     }
@@ -227,4 +289,3 @@ public class GuiController implements Initializable {
         gamePanel.requestFocus();
     }
 }
-

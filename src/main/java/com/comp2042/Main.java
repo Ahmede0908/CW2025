@@ -26,6 +26,10 @@ public class Main extends Application {
         Scene scene = new Scene(root, 300, 510);
         primaryStage.setScene(scene);
         primaryStage.show();
+        
+        // Set up fullscreen centering
+        c.setupFullscreenCentering(primaryStage);
+        
         new GameController(c);
     }
 

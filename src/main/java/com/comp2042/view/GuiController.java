@@ -19,6 +19,7 @@ import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -115,6 +116,9 @@ public class GuiController implements Initializable {
     @FXML
     private Label highScoreLabel;
 
+    @FXML
+    private Button restartButton;
+
     private Rectangle[][] displayMatrix;
 
     private InputEventListener eventListener;
@@ -174,6 +178,13 @@ public class GuiController implements Initializable {
                 // P key toggles pause/unpause (works even when paused or game over)
                 if (keyEvent.getCode() == KeyCode.P) {
                     togglePause();
+                    keyEvent.consume();
+                    return;
+                }
+
+                // R key restarts the game (works during game and after game over)
+                if (keyEvent.getCode() == KeyCode.R) {
+                    restartGame(null);
                     keyEvent.consume();
                     return;
                 }
@@ -1243,5 +1254,87 @@ public class GuiController implements Initializable {
      */
     public void pauseGame(ActionEvent actionEvent) {
         togglePause();
+    }
+
+    /**
+     * Restarts the game completely.
+     * <p>
+     * This method performs a full game restart by:
+     * <ul>
+     *   <li>Stopping the current timeline</li>
+     *   <li>Resetting pause and game over states</li>
+     *   <li>Hiding the game over panel and pause overlay</li>
+     *   <li>Resetting the board through the event listener</li>
+     *   <li>Reinitializing the view with the reset board state</li>
+     *   <li>Resetting the timeline to default speed (400ms)</li>
+     *   <li>Clearing and reinitializing the ghost piece</li>
+     *   <li>Centering all UI elements</li>
+     * </ul>
+     * This method works both during a running game and after game over.
+     * </p>
+     *
+     * @param actionEvent the action event that triggered this method (can be
+     *                    null, e.g., when called from keyboard shortcut)
+     */
+    public void restartGame(ActionEvent actionEvent) {
+        // Stop the timeline
+        if (timeLine != null) {
+            timeLine.stop();
+        }
+
+        // Reset pause state
+        isPause.setValue(Boolean.FALSE);
+        hidePauseOverlay();
+
+        // Reset game over state and hide game over panel
+        isGameOver.setValue(Boolean.FALSE);
+        gameOverPanel.setVisible(false);
+
+        // Clear ghost panel
+        if (ghostPanel != null) {
+            ghostPanel.getChildren().clear();
+            ghostRectangles = null;
+            ghostPanel.setVisible(false);
+        }
+
+        // Reset the board through the event listener
+        // createNewGame() already calls refreshGameBackground and refreshScoreboard
+        if (eventListener != null) {
+            eventListener.createNewGame();
+            
+            // Get the current view data after reset to refresh the brick display
+            // Use a non-moving event (left) to get current state - at spawn position,
+            // moving left should fail and return current ViewData without side effects
+            ViewData resetViewData = eventListener.onLeftEvent(
+                    new MoveEvent(EventType.LEFT, EventSource.THREAD));
+            
+            // Refresh the brick display with the reset state
+            refreshBrick(resetViewData);
+        }
+
+        // Reinitialize the timeline with default speed (400ms)
+        timeLine = new Timeline(new KeyFrame(
+                Duration.millis(400),
+                ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
+        ));
+        timeLine.setCycleCount(Timeline.INDEFINITE);
+        timeLine.play();
+
+        // Request focus for keyboard input
+        gamePanel.requestFocus();
+
+        // Center everything
+        Platform.runLater(() -> {
+            if (gameBoard.getScene() != null) {
+                javafx.stage.Window window = gameBoard.getScene().getWindow();
+                if (window instanceof Stage) {
+                    if (((Stage) window).isFullScreen()) {
+                        centerBoardForFullscreen((Stage) window);
+                    } else {
+                        centerBoardInWindow((Stage) window);
+                    }
+                }
+            }
+        });
     }
 }

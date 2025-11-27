@@ -39,6 +39,10 @@
                style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 0 0 0;"/>
         <Label fx:id="highScoreLabel" text="0" 
                style="-fx-text-fill: #ffff00; -fx-font-size: 18px;"/>
+        <Button fx:id="restartButton" text="Restart" 
+                onAction="#restartGame"
+                style="-fx-padding: 10 20 10 20; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: #ffffff; -fx-border-color: #888888; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-cursor: hand; -fx-padding: 10 0 0 0;"
+                styleClass="restart-button"/>
     </VBox>
 
     <Group fx:id="groupNotification">

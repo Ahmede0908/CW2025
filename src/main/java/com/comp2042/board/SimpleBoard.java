@@ -77,16 +77,15 @@ public class SimpleBoard implements Board {
     @Override
     public boolean moveBrickDown() {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        Point newOffset = MovementHandler.moveDown(currentOffset);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix,
-                brickRotator.getCurrentShape(), (int) newOffset.getX(),
-                (int) newOffset.getY());
-        if (conflict) {
-            return false;
-        } else {
-            currentOffset = newOffset;
+        int[][] currentShape = brickRotator.getCurrentShape();
+        int currentX = (int) currentOffset.getX();
+        int currentY = (int) currentOffset.getY();
+
+        if (CollisionHandler.canMoveDown(currentMatrix, currentShape, currentX, currentY)) {
+            currentOffset = MovementHandler.moveDown(currentOffset);
             return true;
         }
+        return false;
     }
 
     /**
@@ -102,16 +101,15 @@ public class SimpleBoard implements Board {
     @Override
     public boolean moveBrickLeft() {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        Point newOffset = MovementHandler.moveLeft(currentOffset);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix,
-                brickRotator.getCurrentShape(), (int) newOffset.getX(),
-                (int) newOffset.getY());
-        if (conflict) {
-            return false;
-        } else {
-            currentOffset = newOffset;
+        int[][] currentShape = brickRotator.getCurrentShape();
+        int currentX = (int) currentOffset.getX();
+        int currentY = (int) currentOffset.getY();
+
+        if (CollisionHandler.canMoveLeft(currentMatrix, currentShape, currentX, currentY)) {
+            currentOffset = MovementHandler.moveLeft(currentOffset);
             return true;
         }
+        return false;
     }
 
     /**
@@ -127,24 +125,23 @@ public class SimpleBoard implements Board {
     @Override
     public boolean moveBrickRight() {
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        Point newOffset = MovementHandler.moveRight(currentOffset);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix,
-                brickRotator.getCurrentShape(), (int) newOffset.getX(),
-                (int) newOffset.getY());
-        if (conflict) {
-            return false;
-        } else {
-            currentOffset = newOffset;
+        int[][] currentShape = brickRotator.getCurrentShape();
+        int currentX = (int) currentOffset.getX();
+        int currentY = (int) currentOffset.getY();
+
+        if (CollisionHandler.canMoveRight(currentMatrix, currentShape, currentX, currentY)) {
+            currentOffset = MovementHandler.moveRight(currentOffset);
             return true;
         }
+        return false;
     }
 
     /**
      * Attempts to rotate the current brick 90 degrees clockwise.
      * <p>
      * Delegates rotation logic to BrickRotator to get the next rotated shape.
-     * This class is responsible only for validation (collision and bounds
-     * checking). If rotation is valid, applies the rotated shape.
+     * Uses CollisionHandler to validate the rotation. If rotation is valid,
+     * applies the rotated shape.
      * </p>
      *
      * @return true if the rotation was successful, false if rotation was blocked
@@ -156,19 +153,16 @@ public class SimpleBoard implements Board {
         NextShapeInfo rotatedShape = brickRotator.getNextShape();
         int[][] rotatedShapeMatrix = rotatedShape.getShape();
 
-        // SimpleBoard is responsible ONLY for validation (collision + bounds checking)
+        // Use CollisionHandler to validate rotation
         int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
-        boolean conflict = CollisionHandler.hasCollision(currentMatrix,
-                rotatedShapeMatrix, (int) currentOffset.getX(),
-                (int) currentOffset.getY());
+        int currentX = (int) currentOffset.getX();
+        int currentY = (int) currentOffset.getY();
 
-        // If rotation is valid, apply the rotated shape returned by brickRotator
-        if (conflict) {
-            return false;
-        } else {
+        if (CollisionHandler.canRotate(currentMatrix, rotatedShapeMatrix, currentX, currentY)) {
             brickRotator.setCurrentShape(rotatedShape.getPosition());
             return true;
         }
+        return false;
     }
 
     /**
@@ -177,7 +171,7 @@ public class SimpleBoard implements Board {
      * Generates a new brick from the BrickGenerator, sets it in the
      * BrickRotator, and calculates the spawn position at the top center.
      * The spawn X position is clamped to ensure the brick fits within board
-     * boundaries.
+     * boundaries. Uses CollisionHandler to check if spawn is valid.
      * </p>
      *
      * @return true if the new brick collides immediately (game over condition),
@@ -203,9 +197,9 @@ public class SimpleBoard implements Board {
         }
 
         currentOffset = new Point(spawnX, spawnY);
-        return CollisionHandler.hasCollision(currentGameMatrix,
-                brickRotator.getCurrentShape(), (int) currentOffset.getX(),
-                (int) currentOffset.getY());
+
+        // Use CollisionHandler to check spawn validity
+        return CollisionHandler.canSpawn(currentGameMatrix, brickRotator.getCurrentShape(), spawnX);
     }
 
     /**

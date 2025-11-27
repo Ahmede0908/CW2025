@@ -25,6 +25,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.beans.value.ChangeListener;
@@ -106,6 +108,10 @@ public class GuiController implements Initializable {
     private double boardPixelHeight;
     private ViewData lastViewData;
 
+    // Pause overlay components
+    private Group pauseOverlay;
+    private Text pauseText;
+
     /**
      * Initializes the JavaFX controller after FXML loading.
      * <p>
@@ -125,9 +131,21 @@ public class GuiController implements Initializable {
                 .toExternalForm(), 38);
         gamePanel.setFocusTraversable(true);
         gamePanel.requestFocus();
+
+        // Initialize pause overlay
+        initializePauseOverlay();
+
         gamePanel.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
+                // P key toggles pause/unpause (works even when paused or game over)
+                if (keyEvent.getCode() == KeyCode.P) {
+                    togglePause();
+                    keyEvent.consume();
+                    return;
+                }
+
+                // Only process movement keys when not paused and not game over
                 if (isPause.getValue() == Boolean.FALSE &&
                         isGameOver.getValue() == Boolean.FALSE) {
                     if (keyEvent.getCode() == KeyCode.LEFT ||
@@ -165,6 +183,104 @@ public class GuiController implements Initializable {
         reflection.setFraction(0.8);
         reflection.setTopOpacity(0.9);
         reflection.setTopOffset(-12);
+    }
+
+    /**
+     * Initializes the pause overlay components.
+     * <p>
+     * Creates a Group containing a "PAUSED" text label that will be displayed
+     * when the game is paused. The overlay is initially hidden.
+     * </p>
+     */
+    private void initializePauseOverlay() {
+        pauseText = new Text("PAUSED");
+        pauseText.setFont(Font.font("Arial", FontWeight.BOLD, 48));
+        pauseText.setFill(Color.WHITE);
+        pauseText.setStroke(Color.BLACK);
+        pauseText.setStrokeWidth(2);
+
+        pauseOverlay = new Group(pauseText);
+        pauseOverlay.setVisible(false);
+        pauseOverlay.setMouseTransparent(true); // Allow clicks to pass through
+
+        // Add pause overlay to the scene root (will be added in initGameView)
+    }
+
+    /**
+     * Toggles the pause state of the game.
+     * <p>
+     * When pausing: stops the Timeline, disables movement, and shows the pause overlay.
+     * When unpausing: restarts the Timeline, enables movement, and hides the pause overlay.
+     * </p>
+     */
+    private void togglePause() {
+        if (isGameOver.getValue() == Boolean.TRUE) {
+            return; // Don't allow pausing when game is over
+        }
+
+        boolean newPauseState = !isPause.getValue();
+        isPause.setValue(newPauseState);
+
+        if (newPauseState) {
+            // Pause: stop timeline and show overlay
+            if (timeLine != null) {
+                timeLine.pause();
+            }
+            showPauseOverlay();
+        } else {
+            // Unpause: resume timeline and hide overlay
+            if (timeLine != null) {
+                timeLine.play();
+            }
+            hidePauseOverlay();
+        }
+    }
+
+    /**
+     * Shows the pause overlay and centers it over the board.
+     */
+    private void showPauseOverlay() {
+        if (pauseOverlay == null || gameBoard == null) return;
+
+        pauseOverlay.setVisible(true);
+        centerPauseOverlay();
+    }
+
+    /**
+     * Hides the pause overlay.
+     */
+    private void hidePauseOverlay() {
+        if (pauseOverlay == null) return;
+        pauseOverlay.setVisible(false);
+    }
+
+    /**
+     * Centers the pause overlay over the game board.
+     * <p>
+     * Calculates the center position based on the gameBoard's position and size,
+     * accounting for the BorderPane border width.
+     * </p>
+     */
+    private void centerPauseOverlay() {
+        if (pauseOverlay == null || pauseText == null || gameBoard == null) return;
+
+        // Get pause text bounds
+        pauseText.applyCss();
+        // Text nodes don't need explicit layout() - bounds are calculated automatically
+        double textWidth = pauseText.getLayoutBounds().getWidth();
+        double textHeight = pauseText.getLayoutBounds().getHeight();
+
+        // Calculate center position relative to gameBoard
+        double borderWidth = 12.0;
+        double boardCenterX = gameBoard.getLayoutX() + borderWidth + boardPixelWidth / 2.0;
+        double boardCenterY = gameBoard.getLayoutY() + borderWidth + boardPixelHeight / 2.0;
+
+        // Center the text over the board
+        double pauseX = boardCenterX - textWidth / 2.0;
+        double pauseY = boardCenterY - textHeight / 2.0;
+
+        pauseOverlay.setLayoutX(pauseX);
+        pauseOverlay.setLayoutY(pauseY);
     }
 
     /**
@@ -236,6 +352,7 @@ public class GuiController implements Initializable {
         // Set brick panel position relative to gamePanel
         updateBrickPanelPosition(brick);
 
+
         // Center the board after initialization
         Platform.runLater(() -> {
             if (gameBoard.getScene() != null) {
@@ -268,6 +385,17 @@ public class GuiController implements Initializable {
         Scene scene = stage.getScene();
         if (scene == null) return;
 
+        // Add pause overlay to scene root if not already added
+        if (pauseOverlay != null) {
+            javafx.scene.Parent root = scene.getRoot();
+            if (root instanceof javafx.scene.layout.Pane) {
+                javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
+                if (!rootPane.getChildren().contains(pauseOverlay)) {
+                    rootPane.getChildren().add(pauseOverlay);
+                }
+            }
+        }
+
         // Listen to fullscreen property changes
         stage.fullScreenProperty().addListener(
                 new ChangeListener<Boolean>() {
@@ -276,11 +404,20 @@ public class GuiController implements Initializable {
                                        Boolean oldValue, Boolean newValue) {
                         if (newValue) {
                             // Fullscreen activated - center the board
-                            Platform.runLater(() ->
-                                    centerBoardForFullscreen(stage));
+                            Platform.runLater(() -> {
+                                centerBoardForFullscreen(stage);
+                                if (isPause.getValue() == Boolean.TRUE) {
+                                    centerPauseOverlay();
+                                }
+                            });
                         } else {
                             // Fullscreen deactivated - center in windowed mode
-                            Platform.runLater(() -> centerBoardInWindow(stage));
+                            Platform.runLater(() -> {
+                                centerBoardInWindow(stage);
+                                if (isPause.getValue() == Boolean.TRUE) {
+                                    centerPauseOverlay();
+                                }
+                            });
                         }
                     }
                 });
@@ -296,6 +433,9 @@ public class GuiController implements Initializable {
                     } else {
                         centerBoardInWindow(stage);
                     }
+                    if (isPause.getValue() == Boolean.TRUE) {
+                        centerPauseOverlay();
+                    }
                 });
             }
         });
@@ -309,6 +449,9 @@ public class GuiController implements Initializable {
                         centerBoardForFullscreen(stage);
                     } else {
                         centerBoardInWindow(stage);
+                    }
+                    if (isPause.getValue() == Boolean.TRUE) {
+                        centerPauseOverlay();
                     }
                 });
             }
@@ -352,6 +495,11 @@ public class GuiController implements Initializable {
         // Center the game over panel
         centerGameOverPanel(scene);
 
+        // Center pause overlay if visible
+        if (isPause.getValue() == Boolean.TRUE) {
+            centerPauseOverlay();
+        }
+
         // Update brick panel position
         if (lastViewData != null) {
             updateBrickPanelPosition(lastViewData);
@@ -390,6 +538,11 @@ public class GuiController implements Initializable {
 
         // Center the game over panel
         centerGameOverPanel(scene);
+
+        // Center pause overlay if visible
+        if (isPause.getValue() == Boolean.TRUE) {
+            centerPauseOverlay();
+        }
 
         // Update brick panel position
         if (lastViewData != null) {
@@ -592,7 +745,7 @@ public class GuiController implements Initializable {
      * <p>
      * Processes the down event, displays score notifications if rows were
      * cleared, and refreshes the brick display. This method is called
-     * automatically by the Timeline animation.
+     * automatically by the Timeline animation. Movement is disabled when paused.
      * </p>
      *
      * @param event the MoveEvent containing event type and source
@@ -648,6 +801,10 @@ public class GuiController implements Initializable {
         gameOverPanel.setVisible(true);
         isGameOver.setValue(Boolean.TRUE);
 
+        // Hide pause overlay if visible
+        hidePauseOverlay();
+        isPause.setValue(Boolean.FALSE);
+
         // Center the game over panel when it's shown
         if (gameBoard.getScene() != null) {
             centerGameOverPanel(gameBoard.getScene());
@@ -668,6 +825,7 @@ public class GuiController implements Initializable {
     public void newGame(ActionEvent actionEvent) {
         timeLine.stop();
         gameOverPanel.setVisible(false);
+        hidePauseOverlay();
         eventListener.createNewGame();
         gamePanel.requestFocus();
         timeLine.play();
@@ -686,6 +844,6 @@ public class GuiController implements Initializable {
      *                    null)
      */
     public void pauseGame(ActionEvent actionEvent) {
-        gamePanel.requestFocus();
+        togglePause();
     }
 }

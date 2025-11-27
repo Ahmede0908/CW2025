@@ -103,6 +103,18 @@ public class GuiController implements Initializable {
     @FXML
     private GridPane nextPanel;
 
+    @FXML
+    private VBox scoreboardContainer;
+
+    @FXML
+    private Label currentScoreLabel;
+
+    @FXML
+    private Label totalLinesLabel;
+
+    @FXML
+    private Label highScoreLabel;
+
     private Rectangle[][] displayMatrix;
 
     private InputEventListener eventListener;
@@ -373,6 +385,9 @@ public class GuiController implements Initializable {
         // Initialize next piece preview
         initNextPiecePreview(brick.getNextBrickData());
 
+        // Initialize scoreboard
+        refreshScore(brick);
+
         // Store ViewData for centering updates
         lastViewData = brick;
 
@@ -386,6 +401,8 @@ public class GuiController implements Initializable {
                 javafx.stage.Window window = gameBoard.getScene().getWindow();
                 if (window instanceof Stage) {
                     centerBoardInWindow((Stage) window);
+                    positionNextPanel();
+                    positionScoreboard();
                 }
             }
         });
@@ -538,6 +555,9 @@ public class GuiController implements Initializable {
 
         // Update next panel position
         positionNextPanel();
+        
+        // Update scoreboard position
+        positionScoreboard();
     }
 
     /**
@@ -586,6 +606,9 @@ public class GuiController implements Initializable {
 
         // Update next panel position
         positionNextPanel();
+        
+        // Update scoreboard position
+        positionScoreboard();
     }
 
     /**
@@ -932,6 +955,80 @@ public class GuiController implements Initializable {
     }
 
     /**
+     * Positions the scoreboard panel to the left of the game board.
+     * <p>
+     * Calculates the position based on the game board's location and places
+     * the scoreboard to the left of the board with appropriate spacing. The
+     * scoreboard is aligned with the top of the game board vertically.
+     * </p>
+     */
+    private void positionScoreboard() {
+        if (scoreboardContainer == null || gameBoard == null) return;
+
+        // Position scoreboard to the left of the game board
+        // Account for BorderPane's border width (12px from CSS)
+        double borderWidth = 12.0;
+        double spacing = 20.0; // Space between board and scoreboard
+        
+        // Calculate X position: to the left of the game board
+        double scoreboardX = gameBoard.getLayoutX() - spacing;
+        
+        // Get the width of the scoreboard container to position it correctly
+        double scoreboardWidth = scoreboardContainer.getBoundsInLocal().getWidth();
+        if (scoreboardWidth <= 0) {
+            // Fallback: estimate width if bounds not available yet
+            scoreboardWidth = 150.0; // Approximate width of scoreboard
+        }
+        
+        // Position it so the right edge of scoreboard is spaced from the left edge of game board
+        scoreboardX = scoreboardX - scoreboardWidth;
+        
+        // Align vertically with the top of the game board
+        double scoreboardY = gameBoard.getLayoutY() + borderWidth;
+
+        scoreboardContainer.setLayoutX(scoreboardX);
+        scoreboardContainer.setLayoutY(scoreboardY);
+    }
+
+    /**
+     * Refreshes the scoreboard display with current score information.
+     * <p>
+     * Updates the score labels (current score, total lines, high score) based
+     * on the ViewData. This method is called whenever the game state changes
+     * (brick locks, rows cleared, new game).
+     * </p>
+     * <p>
+     * This method is public to allow external controllers (e.g., GameController)
+     * to update the scoreboard when needed.
+     * </p>
+     *
+     * @param viewData the ViewData containing current score information
+     */
+    public void refreshScoreboard(ViewData viewData) {
+        if (currentScoreLabel != null) {
+            currentScoreLabel.setText(String.valueOf(viewData.getScore()));
+        }
+        if (totalLinesLabel != null) {
+            totalLinesLabel.setText(String.valueOf(viewData.getTotalLines()));
+        }
+        if (highScoreLabel != null) {
+            highScoreLabel.setText(String.valueOf(viewData.getHighScore()));
+        }
+    }
+
+    /**
+     * Private helper method that calls refreshScoreboard.
+     * <p>
+     * This is kept for internal use within GuiController.
+     * </p>
+     *
+     * @param viewData the ViewData containing current score information
+     */
+    private void refreshScore(ViewData viewData) {
+        refreshScoreboard(viewData);
+    }
+
+    /**
      * Refreshes the brick visual representation and position.
      * <p>
      * Updates the brick panel position and visual appearance based on the
@@ -958,6 +1055,9 @@ public class GuiController implements Initializable {
 
             // Update next piece preview
             refreshNextPiece(brick.getNextBrickData());
+
+            // Update scoreboard
+            refreshScore(brick);
 
             // Update brick visual representation
             // brick.getBrickData() is [rows][cols] = [y][x]

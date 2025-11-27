@@ -74,9 +74,7 @@ public class GameController implements InputEventListener {
         if (!canMove) {
             board.mergeBrickToBackground();
             clearRow = board.clearRows();
-            if (clearRow.getLinesRemoved() > 0) {
-                board.getScore().add(clearRow.getScoreBonus());
-            }
+            // Score is now updated automatically in SimpleBoard.clearRows()
             if (board.createNewBrick()) {
                 viewGuiController.gameOver();
             }
@@ -85,7 +83,7 @@ public class GameController implements InputEventListener {
 
         } else {
             if (event.getEventSource() == EventSource.USER) {
-                board.getScore().add(1);
+                board.getScore().addScore(1);
             }
         }
         return new DownData(clearRow, board.getViewData());
@@ -141,12 +139,14 @@ public class GameController implements InputEventListener {
      * Creates a new game by resetting the board and refreshing the view.
      * <p>
      * Resets the board state and updates the view to reflect the new game
-     * state.
+     * state. Also refreshes the scoreboard to show reset scores.
      * </p>
      */
     @Override
     public void createNewGame() {
         board.newGame();
         viewGuiController.refreshGameBackground(board.getBoardMatrix());
+        // Refresh scoreboard with reset scores
+        viewGuiController.refreshScoreboard(board.getViewData());
     }
 }

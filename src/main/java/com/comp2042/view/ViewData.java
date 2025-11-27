@@ -31,9 +31,12 @@ public final class ViewData {
     private final int yPosition;
     private final int ghostYPosition;
     private final int[][] nextBrickData;
+    private final int score;
+    private final int totalLines;
+    private final int highScore;
 
     /**
-     * Constructs a new ViewData object with the specified brick information.
+     * Constructs a new ViewData object with the specified brick and score information.
      *
      * @param brickData      the current falling brick shape matrix
      *                       (brickData[row][col])
@@ -43,14 +46,21 @@ public final class ViewData {
      *                       (ghost piece Y coordinate)
      * @param nextBrickData  the next brick preview shape matrix
      *                       (nextBrickData[row][col])
+     * @param score          the current game score
+     * @param totalLines     the total number of lines cleared
+     * @param highScore      the high score (persists across games)
      */
     public ViewData(int[][] brickData, int xPosition, int yPosition,
-                    int ghostYPosition, int[][] nextBrickData) {
+                    int ghostYPosition, int[][] nextBrickData,
+                    int score, int totalLines, int highScore) {
         this.brickData = brickData;
         this.xPosition = xPosition;
         this.yPosition = yPosition;
         this.ghostYPosition = ghostYPosition;
         this.nextBrickData = nextBrickData;
+        this.score = score;
+        this.totalLines = totalLines;
+        this.highScore = highScore;
     }
 
     /**
@@ -110,5 +120,32 @@ public final class ViewData {
      */
     public int[][] getNextBrickData() {
         return MatrixOperations.copy(nextBrickData);
+    }
+
+    /**
+     * Returns the current game score.
+     *
+     * @return the current score
+     */
+    public int getScore() {
+        return score;
+    }
+
+    /**
+     * Returns the total number of lines cleared in the current game.
+     *
+     * @return the total lines cleared
+     */
+    public int getTotalLines() {
+        return totalLines;
+    }
+
+    /**
+     * Returns the high score (persists across games).
+     *
+     * @return the high score
+     */
+    public int getHighScore() {
+        return highScore;
     }
 }

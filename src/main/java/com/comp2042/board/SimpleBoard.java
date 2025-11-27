@@ -255,11 +255,12 @@ public class SimpleBoard implements Board {
      * Returns the current view data for rendering the game state.
      * <p>
      * Includes the current falling brick shape, its position (x, y), the
-     * ghost Y position (where it would land), and the next brick preview shape.
+     * ghost Y position (where it would land), the next brick preview shape,
+     * and score information (current score, total lines, high score).
      * </p>
      *
      * @return ViewData object containing brick shape, position, ghost position,
-     *         and next brick information
+     *         next brick information, and score data
      */
     @Override
     public ViewData getViewData() {
@@ -267,7 +268,10 @@ public class SimpleBoard implements Board {
         return new ViewData(brickRotator.getCurrentShape(),
                 (int) currentOffset.getX(), (int) currentOffset.getY(),
                 ghostY,
-                brickGenerator.getNextBrick().getShapeMatrix().get(0));
+                brickGenerator.getNextBrick().getShapeMatrix().get(0),
+                score.getCurrentScore(),
+                score.getTotalLines(),
+                score.getHighScore());
     }
 
     /**
@@ -289,7 +293,7 @@ public class SimpleBoard implements Board {
      * Clears all completed rows from the board and collapses remaining rows.
      * <p>
      * Delegates row clearing logic to RowClearer. Updates the board matrix
-     * with the result.
+     * with the result. Updates the score with lines cleared and score bonus.
      * </p>
      *
      * @return ClearRow object containing the number of lines removed, updated
@@ -299,6 +303,13 @@ public class SimpleBoard implements Board {
     public ClearRow clearRows() {
         ClearRow clearRow = RowClearer.clear(currentGameMatrix);
         currentGameMatrix = clearRow.getNewMatrix();
+        
+        // Update score: add lines cleared and score bonus
+        if (clearRow.getLinesRemoved() > 0) {
+            score.addLines(clearRow.getLinesRemoved());
+            score.addScore(clearRow.getScoreBonus());
+        }
+        
         return clearRow;
     }
 

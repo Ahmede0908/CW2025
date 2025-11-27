@@ -15,6 +15,15 @@
         </center>
     </BorderPane>
 
+    <!-- Next Piece Preview Panel -->
+    <VBox fx:id="nextPieceContainer" alignment="CENTER" spacing="5">
+        <Label fx:id="nextPieceLabel" text="NEXT" 
+               style="-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+        <GridPane fx:id="nextPanel" hgap="1" vgap="1" 
+                  style="-fx-padding: 10; -fx-border-color: #888888; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-color: #2a2a2a; -fx-background-radius: 5;"
+                  alignment="CENTER"/>
+    </VBox>
+
     <Group fx:id="groupNotification">
         <VBox alignment="CENTER">
             <GameOverPanel fx:id="gameOverPanel"/>

@@ -19,8 +19,10 @@ import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -92,6 +94,15 @@ public class GuiController implements Initializable {
     @FXML
     private GameOverPanel gameOverPanel;
 
+    @FXML
+    private VBox nextPieceContainer;
+
+    @FXML
+    private Label nextPieceLabel;
+
+    @FXML
+    private GridPane nextPanel;
+
     private Rectangle[][] displayMatrix;
 
     private InputEventListener eventListener;
@@ -101,6 +112,9 @@ public class GuiController implements Initializable {
     // Ghost piece components
     private GridPane ghostPanel;
     private Rectangle[][] ghostRectangles;
+
+    // Next piece preview components
+    private Rectangle[][] nextPieceMatrix;
 
     private Timeline timeLine;
 
@@ -356,6 +370,9 @@ public class GuiController implements Initializable {
         // Initialize ghost panel
         initializeGhostPanel(brick);
 
+        // Initialize next piece preview
+        initNextPiecePreview(brick.getNextBrickData());
+
         // Store ViewData for centering updates
         lastViewData = brick;
 
@@ -518,6 +535,9 @@ public class GuiController implements Initializable {
             updateBrickPanelPosition(lastViewData);
             updateGhostPanelPosition(lastViewData);
         }
+
+        // Update next panel position
+        positionNextPanel();
     }
 
     /**
@@ -563,6 +583,9 @@ public class GuiController implements Initializable {
             updateBrickPanelPosition(lastViewData);
             updateGhostPanelPosition(lastViewData);
         }
+
+        // Update next panel position
+        positionNextPanel();
     }
 
     /**
@@ -795,11 +818,125 @@ public class GuiController implements Initializable {
     }
 
     /**
+     * Initializes the next piece preview panel.
+     * <p>
+     * Creates a GridPane with rectangles for displaying the next falling piece.
+     * The preview shows the exact shape that will spawn next, centered within
+     * the preview panel. The panel is sized to accommodate the largest possible
+     * brick shape (6x6 grid for better visibility).
+     * </p>
+     *
+     * @param nextBrick the 2D integer array representing the next brick shape
+     *                  (nextBrick[row][col])
+     */
+    private void initNextPiecePreview(int[][] nextBrick) {
+        if (nextPanel == null) return;
+
+        // Clear old rectangles
+        nextPanel.getChildren().clear();
+
+        // Get dimensions of the next brick
+        int brickHeight = nextBrick.length;
+        int brickWidth = nextBrick[0].length;
+
+        // Initialize next piece matrix
+        nextPieceMatrix = new Rectangle[brickHeight][brickWidth];
+
+        // Set fixed size for the preview panel to prevent distortion
+        // Use a 6x6 grid to make the box bigger and accommodate all brick shapes
+        int maxSize = 6;
+        double cellSize = BRICK_SIZE + CELL_GAP;
+        double panelWidth = maxSize * cellSize;
+        double panelHeight = maxSize * cellSize;
+        nextPanel.setPrefSize(panelWidth, panelHeight);
+        nextPanel.setMinSize(panelWidth, panelHeight);
+        nextPanel.setMaxSize(panelWidth, panelHeight);
+
+        // Calculate centering offsets to center the brick in the preview panel
+        int offsetX = (maxSize - brickWidth) / 2;
+        int offsetY = (maxSize - brickHeight) / 2;
+
+        // Create rectangles for the next brick
+        // Loop: y (row) as outer, x (col) as inner
+        for (int y = 0; y < brickHeight; y++) {
+            for (int x = 0; x < brickWidth; x++) {
+                Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
+                rectangle.setFill(getFillColor(nextBrick[y][x]));
+                rectangle.setArcHeight(9);
+                rectangle.setArcWidth(9);
+                nextPieceMatrix[y][x] = rectangle;
+                // Add to GridPane with centering offset
+                // GridPane.add(node, column, row) = add(node, x + offsetX, y + offsetY)
+                nextPanel.add(rectangle, x + offsetX, y + offsetY);
+            }
+        }
+
+        // Position the next panel beside the game board
+        positionNextPanel();
+    }
+
+    /**
+     * Refreshes the next piece preview with a new brick shape.
+     * <p>
+     * Updates the visual representation of the next piece preview panel.
+     * Reinitializes the preview if the brick dimensions have changed.
+     * </p>
+     *
+     * @param nextBrick the 2D integer array representing the next brick shape
+     *                  (nextBrick[row][col])
+     */
+    private void refreshNextPiece(int[][] nextBrick) {
+        if (nextPanel == null) return;
+
+        int brickHeight = nextBrick.length;
+        int brickWidth = nextBrick[0].length;
+
+        // Reinitialize if dimensions changed
+        if (nextPieceMatrix == null || nextPieceMatrix.length != brickHeight ||
+                (nextPieceMatrix.length > 0 && nextPieceMatrix[0].length != brickWidth)) {
+            initNextPiecePreview(nextBrick);
+            return;
+        }
+
+        // Update existing rectangles
+        // Loop: y (row) as outer, x (col) as inner
+        for (int y = 0; y < brickHeight; y++) {
+            for (int x = 0; x < brickWidth; x++) {
+                if (nextPieceMatrix[y][x] != null) {
+                    setRectangleData(nextBrick[y][x], nextPieceMatrix[y][x]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Positions the next piece preview panel beside the main game board.
+     * <p>
+     * Calculates the position based on the game board's location and places
+     * the preview panel to the right of the board with appropriate spacing.
+     * The panel is positioned to align with the top of the game board.
+     * </p>
+     */
+    private void positionNextPanel() {
+        if (nextPieceContainer == null || gameBoard == null) return;
+
+        // Position next piece container (VBox with label and panel) to the right of the game board
+        // Account for BorderPane's border width (12px from CSS)
+        double borderWidth = 12.0;
+        double spacing = 20.0; // Space between board and preview
+        double nextPanelX = gameBoard.getLayoutX() + boardPixelWidth + (borderWidth * 2) + spacing;
+        double nextPanelY = gameBoard.getLayoutY() + borderWidth;
+
+        nextPieceContainer.setLayoutX(nextPanelX);
+        nextPieceContainer.setLayoutY(nextPanelY);
+    }
+
+    /**
      * Refreshes the brick visual representation and position.
      * <p>
      * Updates the brick panel position and visual appearance based on the
-     * current ViewData. Also updates the ghost piece position and appearance.
-     * Only updates if the game is not paused.
+     * current ViewData. Also updates the ghost piece position and appearance,
+     * and refreshes the next piece preview. Only updates if the game is not paused.
      * </p>
      * <p>
      * Coordinate system: x = column, y = row. Brick data is indexed as
@@ -818,6 +955,9 @@ public class GuiController implements Initializable {
 
             // Update ghost panel position
             updateGhostPanelPosition(brick);
+
+            // Update next piece preview
+            refreshNextPiece(brick.getNextBrickData());
 
             // Update brick visual representation
             // brick.getBrickData() is [rows][cols] = [y][x]

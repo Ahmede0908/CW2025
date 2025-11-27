@@ -203,6 +203,40 @@ public class SimpleBoard implements Board {
     }
 
     /**
+     * Calculates the Y position where the current brick would land (ghost position).
+     * <p>
+     * Simulates downward movement until collision is detected, returning the
+     * highest Y position where the brick can be placed without collision.
+     * This is used to display the ghost piece preview.
+     * </p>
+     *
+     * @return the Y position (row) where the brick would land, or the current
+     *         Y position if already at the bottom
+     */
+    public int calculateGhostYPosition() {
+        int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
+        int[][] currentShape = brickRotator.getCurrentShape();
+        int currentX = (int) currentOffset.getX();
+        int currentY = (int) currentOffset.getY();
+
+        // Simulate downward movement until collision
+        // Start from current position and find the lowest valid position
+        int ghostY = currentY;
+        // Keep moving down as long as we can
+        // canMoveDown(x, y) checks if we can move FROM y to y+1
+        // So if canMoveDown(y) is true, we can move to y+1, so increment ghostY
+        // When canMoveDown(ghostY) is false, we cannot move from ghostY, so ghostY is the landing position
+        while (ghostY < height - 1 && 
+               CollisionHandler.canMoveDown(currentMatrix, currentShape, currentX, ghostY)) {
+            ghostY++;
+        }
+        // ghostY is now the position where we cannot move down further
+        // This is the landing position
+
+        return ghostY;
+    }
+
+    /**
      * Returns the current state of the game board matrix.
      * <p>
      * The matrix is indexed as matrix[row][col]. Non-zero values represent
@@ -220,17 +254,19 @@ public class SimpleBoard implements Board {
     /**
      * Returns the current view data for rendering the game state.
      * <p>
-     * Includes the current falling brick shape, its position (x, y), and the
-     * next brick preview shape.
+     * Includes the current falling brick shape, its position (x, y), the
+     * ghost Y position (where it would land), and the next brick preview shape.
      * </p>
      *
-     * @return ViewData object containing brick shape, position, and next brick
-     *         information
+     * @return ViewData object containing brick shape, position, ghost position,
+     *         and next brick information
      */
     @Override
     public ViewData getViewData() {
+        int ghostY = calculateGhostYPosition();
         return new ViewData(brickRotator.getCurrentShape(),
                 (int) currentOffset.getX(), (int) currentOffset.getY(),
+                ghostY,
                 brickGenerator.getNextBrick().getShapeMatrix().get(0));
     }
 

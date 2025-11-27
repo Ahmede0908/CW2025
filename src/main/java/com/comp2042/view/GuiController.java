@@ -73,6 +73,9 @@ public class GuiController implements Initializable {
 
     /** Size of each brick cell in pixels. */
     private static final int BRICK_SIZE = 20;
+    
+    /** Gap between cells in GridPane (matches vgap and hgap). */
+    private static final int CELL_GAP = 1;
 
     @FXML
     private BorderPane gameBoard;
@@ -94,6 +97,10 @@ public class GuiController implements Initializable {
     private InputEventListener eventListener;
 
     private Rectangle[][] rectangles;
+
+    // Ghost piece components
+    private GridPane ghostPanel;
+    private Rectangle[][] ghostRectangles;
 
     private Timeline timeLine;
 
@@ -346,6 +353,9 @@ public class GuiController implements Initializable {
             }
         }
 
+        // Initialize ghost panel
+        initializeGhostPanel(brick);
+
         // Store ViewData for centering updates
         lastViewData = brick;
 
@@ -385,14 +395,17 @@ public class GuiController implements Initializable {
         Scene scene = stage.getScene();
         if (scene == null) return;
 
-        // Add pause overlay to scene root if not already added
-        if (pauseOverlay != null) {
-            javafx.scene.Parent root = scene.getRoot();
-            if (root instanceof javafx.scene.layout.Pane) {
-                javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
-                if (!rootPane.getChildren().contains(pauseOverlay)) {
-                    rootPane.getChildren().add(pauseOverlay);
-                }
+        // Add pause overlay and ghost panel to scene root if not already added
+        javafx.scene.Parent root = scene.getRoot();
+        if (root instanceof javafx.scene.layout.Pane) {
+            javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
+            
+            if (pauseOverlay != null && !rootPane.getChildren().contains(pauseOverlay)) {
+                rootPane.getChildren().add(pauseOverlay);
+            }
+            
+            if (ghostPanel != null && !rootPane.getChildren().contains(ghostPanel)) {
+                rootPane.getChildren().add(ghostPanel);
             }
         }
 
@@ -503,6 +516,7 @@ public class GuiController implements Initializable {
         // Update brick panel position
         if (lastViewData != null) {
             updateBrickPanelPosition(lastViewData);
+            updateGhostPanelPosition(lastViewData);
         }
     }
 
@@ -547,6 +561,7 @@ public class GuiController implements Initializable {
         // Update brick panel position
         if (lastViewData != null) {
             updateBrickPanelPosition(lastViewData);
+            updateGhostPanelPosition(lastViewData);
         }
     }
 
@@ -594,6 +609,66 @@ public class GuiController implements Initializable {
     }
 
     /**
+     * Initializes the ghost panel for displaying the ghost piece.
+     * <p>
+     * Creates a GridPane with rectangles for the ghost piece. The ghost piece
+     * shows where the active brick will land. It is rendered with semi-transparent
+     * colors (opacity 0.3) behind the active brick.
+     * </p>
+     *
+     * @param brick the ViewData containing the brick shape information
+     */
+    private void initializeGhostPanel(ViewData brick) {
+        // Create ghost panel if it doesn't exist
+        if (ghostPanel == null) {
+            ghostPanel = new GridPane();
+            ghostPanel.setHgap(1);
+            ghostPanel.setVgap(1);
+            ghostPanel.setMouseTransparent(true); // Allow clicks to pass through
+            ghostPanel.setVisible(true); // Visible by default
+            ghostPanel.setViewOrder(1.0); // Render behind active brick (lower view order = behind)
+
+            // Add ghost panel to scene root
+            if (gameBoard.getScene() != null) {
+                javafx.scene.Parent root = gameBoard.getScene().getRoot();
+                if (root instanceof javafx.scene.layout.Pane) {
+                    javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
+                    if (!rootPane.getChildren().contains(ghostPanel)) {
+                        rootPane.getChildren().add(ghostPanel);
+                    }
+                }
+            }
+        } else {
+            // Ensure ghost panel is visible when reinitializing
+            ghostPanel.setVisible(true);
+        }
+
+        // Clear old ghost rectangles
+        ghostPanel.getChildren().clear();
+
+        // Initialize ghost rectangles
+        int[][] brickData = brick.getBrickData();
+        int brickHeight = brickData.length;
+        int brickWidth = brickData[0].length;
+        ghostRectangles = new Rectangle[brickHeight][brickWidth];
+
+        // Loop: y (row) as outer, x (col) as inner
+        for (int y = 0; y < brickHeight; y++) {
+            for (int x = 0; x < brickWidth; x++) {
+                Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
+                // Set ghost color with opacity 0.3
+                Paint ghostColor = getGhostColor(brickData[y][x]);
+                rectangle.setFill(ghostColor);
+                rectangle.setArcHeight(9);
+                rectangle.setArcWidth(9);
+                ghostRectangles[y][x] = rectangle;
+                // GridPane.add(node, column, row) = add(node, x, y)
+                ghostPanel.add(rectangle, x, y);
+            }
+        }
+    }
+
+    /**
      * Updates the brick panel position relative to the centered gameBoard.
      * <p>
      * Positions the falling brick panel based on the brick's (x, y) position
@@ -611,13 +686,68 @@ public class GuiController implements Initializable {
         // x = column, y = row
         // Position brickPanel relative to gameBoard's position
         // Account for BorderPane's border width (12px from CSS)
+        // Account for GridPane gaps: each cell is BRICK_SIZE + CELL_GAP apart
         double borderWidth = 12.0;
+        double cellWidth = BRICK_SIZE + CELL_GAP;
+        double cellHeight = BRICK_SIZE + CELL_GAP;
         double layoutX = gameBoard.getLayoutX() + borderWidth +
-                brick.getxPosition() * BRICK_SIZE;
+                brick.getxPosition() * cellWidth;
         double layoutY = gameBoard.getLayoutY() + borderWidth +
-                brick.getyPosition() * BRICK_SIZE;
+                brick.getyPosition() * cellHeight;
         brickPanel.setLayoutX(layoutX);
         brickPanel.setLayoutY(layoutY);
+    }
+
+    /**
+     * Updates the ghost panel position relative to the centered gameBoard.
+     * <p>
+     * Positions the ghost panel at the ghost Y position (where the brick
+     * would land) with the same X position as the active brick.
+     * </p>
+     * <p>
+     * Coordinate system: x = column, y = row. The ghostPanel must be
+     * positioned inside the gameBoard.
+     * </p>
+     *
+     * @param brick the ViewData containing the brick's position and ghost position
+     */
+    private void updateGhostPanelPosition(ViewData brick) {
+        if (ghostPanel == null || gameBoard == null) return;
+
+        // x = column, y = row (ghost Y position)
+        // Position ghostPanel relative to gameBoard's position
+        // Account for BorderPane's border width (12px from CSS)
+        // Account for GridPane gaps: each cell is BRICK_SIZE + CELL_GAP apart
+        double borderWidth = 12.0;
+        double cellWidth = BRICK_SIZE + CELL_GAP;
+        double cellHeight = BRICK_SIZE + CELL_GAP;
+        double layoutX = gameBoard.getLayoutX() + borderWidth +
+                brick.getxPosition() * cellWidth;
+        double layoutY = gameBoard.getLayoutY() + borderWidth +
+                brick.getGhostYPosition() * cellHeight;
+        ghostPanel.setLayoutX(layoutX);
+        ghostPanel.setLayoutY(layoutY);
+    }
+
+    /**
+     * Gets the ghost color for a given color value with 0.3 opacity.
+     * <p>
+     * Returns a semi-transparent version of the brick color to create
+     * the ghost piece effect.
+     * </p>
+     *
+     * @param colorValue the color value (0-7) from the brick
+     * @return a Color with opacity 0.3, or TRANSPARENT if colorValue is 0
+     */
+    private Paint getGhostColor(int colorValue) {
+        if (colorValue == 0) {
+            return Color.TRANSPARENT;
+        }
+
+        // Get the base color and apply 0.3 opacity
+        Color baseColor = (Color) getFillColor(colorValue);
+        return new Color(baseColor.getRed(), baseColor.getGreen(),
+                baseColor.getBlue(), 0.3);
     }
 
     /**
@@ -668,7 +798,8 @@ public class GuiController implements Initializable {
      * Refreshes the brick visual representation and position.
      * <p>
      * Updates the brick panel position and visual appearance based on the
-     * current ViewData. Only updates if the game is not paused.
+     * current ViewData. Also updates the ghost piece position and appearance.
+     * Only updates if the game is not paused.
      * </p>
      * <p>
      * Coordinate system: x = column, y = row. Brick data is indexed as
@@ -685,15 +816,31 @@ public class GuiController implements Initializable {
             // Update brick panel position using clean coordinate translation
             updateBrickPanelPosition(brick);
 
+            // Update ghost panel position
+            updateGhostPanelPosition(brick);
+
             // Update brick visual representation
             // brick.getBrickData() is [rows][cols] = [y][x]
             int brickHeight = brick.getBrickData().length;
             int brickWidth = brick.getBrickData()[0].length;
+            
+            // Reinitialize ghost panel if brick dimensions changed (e.g., after rotation)
+            if (ghostRectangles == null || ghostRectangles.length != brickHeight ||
+                    (ghostRectangles.length > 0 && ghostRectangles[0].length != brickWidth)) {
+                initializeGhostPanel(brick);
+            }
+            
             // Loop: y (row) as outer, x (col) as inner
             for (int y = 0; y < brickHeight; y++) {
                 for (int x = 0; x < brickWidth; x++) {
                     setRectangleData(brick.getBrickData()[y][x],
                             rectangles[y][x]);
+                    // Update ghost rectangles with semi-transparent colors
+                    if (ghostRectangles != null && y < ghostRectangles.length &&
+                            x < ghostRectangles[y].length) {
+                        Paint ghostColor = getGhostColor(brick.getBrickData()[y][x]);
+                        ghostRectangles[y][x].setFill(ghostColor);
+                    }
                 }
             }
         }
@@ -805,6 +952,11 @@ public class GuiController implements Initializable {
         hidePauseOverlay();
         isPause.setValue(Boolean.FALSE);
 
+        // Hide ghost panel
+        if (ghostPanel != null) {
+            ghostPanel.setVisible(false);
+        }
+
         // Center the game over panel when it's shown
         if (gameBoard.getScene() != null) {
             centerGameOverPanel(gameBoard.getScene());
@@ -826,6 +978,12 @@ public class GuiController implements Initializable {
         timeLine.stop();
         gameOverPanel.setVisible(false);
         hidePauseOverlay();
+        
+        // Show ghost panel for new game
+        if (ghostPanel != null) {
+            ghostPanel.setVisible(true);
+        }
+        
         eventListener.createNewGame();
         gamePanel.requestFocus();
         timeLine.play();

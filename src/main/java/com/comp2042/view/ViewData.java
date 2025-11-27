@@ -16,6 +16,7 @@ import com.comp2042.logic.MatrixOperations;
  * <ul>
  *   <li>xPosition = column (horizontal position)</li>
  *   <li>yPosition = row (vertical position)</li>
+ *   <li>ghostYPosition = row where the brick would land (ghost piece position)</li>
  *   <li>Brick data is indexed as brickData[row][col]</li>
  * </ul>
  * </p>
@@ -28,23 +29,27 @@ public final class ViewData {
     private final int[][] brickData;
     private final int xPosition;
     private final int yPosition;
+    private final int ghostYPosition;
     private final int[][] nextBrickData;
 
     /**
      * Constructs a new ViewData object with the specified brick information.
      *
-     * @param brickData     the current falling brick shape matrix
-     *                      (brickData[row][col])
-     * @param xPosition     the column position of the brick (x coordinate)
-     * @param yPosition     the row position of the brick (y coordinate)
-     * @param nextBrickData the next brick preview shape matrix
-     *                      (nextBrickData[row][col])
+     * @param brickData      the current falling brick shape matrix
+     *                       (brickData[row][col])
+     * @param xPosition      the column position of the brick (x coordinate)
+     * @param yPosition      the row position of the brick (y coordinate)
+     * @param ghostYPosition the row position where the brick would land
+     *                       (ghost piece Y coordinate)
+     * @param nextBrickData  the next brick preview shape matrix
+     *                       (nextBrickData[row][col])
      */
     public ViewData(int[][] brickData, int xPosition, int yPosition,
-                    int[][] nextBrickData) {
+                    int ghostYPosition, int[][] nextBrickData) {
         this.brickData = brickData;
         this.xPosition = xPosition;
         this.yPosition = yPosition;
+        this.ghostYPosition = ghostYPosition;
         this.nextBrickData = nextBrickData;
     }
 
@@ -77,6 +82,21 @@ public final class ViewData {
      */
     public int getyPosition() {
         return yPosition;
+    }
+
+    /**
+     * Returns the row position (y coordinate) where the brick would land
+     * (ghost piece position).
+     * <p>
+     * This is calculated by simulating downward movement until collision.
+     * The ghost piece is displayed at this position to show where the brick
+     * will land.
+     * </p>
+     *
+     * @return the ghost Y position (row index where brick would land)
+     */
+    public int getGhostYPosition() {
+        return ghostYPosition;
     }
 
     /**

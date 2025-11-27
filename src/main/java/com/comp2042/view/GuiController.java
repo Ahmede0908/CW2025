@@ -33,8 +33,43 @@ import javafx.beans.value.ObservableValue;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+/**
+ * Controller for the JavaFX GUI in the Tetris game.
+ * <p>
+ * This class is part of the View layer in the MVC architecture. It manages
+ * all JavaFX UI components, handles user input events, coordinates rendering
+ * of the game board and falling bricks, and manages visual effects such as
+ * animations and notifications. It implements Initializable for FXML-based
+ * initialization.
+ * </p>
+ * <p>
+ * <strong>Coordinate System:</strong>
+ * <ul>
+ *   <li>x = column (horizontal position)</li>
+ *   <li>y = row (vertical position)</li>
+ *   <li>Board matrix: board[row][col] = board[y][x]</li>
+ *   <li>GridPane: add(node, column, row) = add(node, x, y)</li>
+ *   <li>Brick offset: (x=col, y=row)</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Responsibilities:
+ * <ul>
+ *   <li>Initialize and manage JavaFX UI components (GridPanes, Groups)</li>
+ *   <li>Handle keyboard input and translate to game events</li>
+ *   <li>Render the game board and falling bricks</li>
+ *   <li>Center the board in windowed and fullscreen modes</li>
+ *   <li>Manage game state UI (pause, game over)</li>
+ *   <li>Display score notifications and game over panel</li>
+ * </ul>
+ * </p>
+ *
+ * @author TetrisJFX Team
+ * @version 1.0
+ */
 public class GuiController implements Initializable {
 
+    /** Size of each brick cell in pixels. */
     private static final int BRICK_SIZE = 20;
 
     @FXML
@@ -71,28 +106,50 @@ public class GuiController implements Initializable {
     private double boardPixelHeight;
     private ViewData lastViewData;
 
+    /**
+     * Initializes the JavaFX controller after FXML loading.
+     * <p>
+     * Sets up keyboard event handlers, loads custom fonts, and initializes
+     * UI component properties. This method is called automatically by JavaFX
+     * after the FXML file is loaded.
+     * </p>
+     *
+     * @param location  the location used to resolve relative paths for the
+     *                  root object, or null if unknown
+     * @param resources the resources used to localize the root object, or null
+     *                  if unknown
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        Font.loadFont(getClass().getClassLoader().getResource("digital.ttf").toExternalForm(), 38);
+        Font.loadFont(getClass().getClassLoader().getResource("digital.ttf")
+                .toExternalForm(), 38);
         gamePanel.setFocusTraversable(true);
         gamePanel.requestFocus();
         gamePanel.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
-                if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
-                    if (keyEvent.getCode() == KeyCode.LEFT || keyEvent.getCode() == KeyCode.A) {
-                        refreshBrick(eventListener.onLeftEvent(new MoveEvent(EventType.LEFT, EventSource.USER)));
+                if (isPause.getValue() == Boolean.FALSE &&
+                        isGameOver.getValue() == Boolean.FALSE) {
+                    if (keyEvent.getCode() == KeyCode.LEFT ||
+                            keyEvent.getCode() == KeyCode.A) {
+                        refreshBrick(eventListener.onLeftEvent(
+                                new MoveEvent(EventType.LEFT, EventSource.USER)));
                         keyEvent.consume();
                     }
-                    if (keyEvent.getCode() == KeyCode.RIGHT || keyEvent.getCode() == KeyCode.D) {
-                        refreshBrick(eventListener.onRightEvent(new MoveEvent(EventType.RIGHT, EventSource.USER)));
+                    if (keyEvent.getCode() == KeyCode.RIGHT ||
+                            keyEvent.getCode() == KeyCode.D) {
+                        refreshBrick(eventListener.onRightEvent(
+                                new MoveEvent(EventType.RIGHT, EventSource.USER)));
                         keyEvent.consume();
                     }
-                    if (keyEvent.getCode() == KeyCode.UP || keyEvent.getCode() == KeyCode.W) {
-                        refreshBrick(eventListener.onRotateEvent(new MoveEvent(EventType.ROTATE, EventSource.USER)));
+                    if (keyEvent.getCode() == KeyCode.UP ||
+                            keyEvent.getCode() == KeyCode.W) {
+                        refreshBrick(eventListener.onRotateEvent(
+                                new MoveEvent(EventType.ROTATE, EventSource.USER)));
                         keyEvent.consume();
                     }
-                    if (keyEvent.getCode() == KeyCode.DOWN || keyEvent.getCode() == KeyCode.S) {
+                    if (keyEvent.getCode() == KeyCode.DOWN ||
+                            keyEvent.getCode() == KeyCode.S) {
                         moveDown(new MoveEvent(EventType.DOWN, EventSource.USER));
                         keyEvent.consume();
                     }
@@ -111,29 +168,38 @@ public class GuiController implements Initializable {
     }
 
     /**
-     * Initializes the game view.
-     * Coordinate system: x = column, y = row
-     * Board matrix: board[row][col] = board[y][x]
-     * GridPane: add(node, column, row) = add(node, x, y)
+     * Initializes the game view with the board matrix and initial brick state.
+     * <p>
+     * Creates Rectangle objects for each cell in the board and brick panels,
+     * sets up the visual representation, and starts the automatic downward
+     * movement timeline. The board is centered after initialization.
+     * </p>
+     * <p>
+     * Coordinate system: x = column, y = row. Board matrix is indexed as
+     * board[row][col] = board[y][x]. GridPane uses add(node, column, row).
+     * </p>
+     *
+     * @param boardMatrix the initial board state matrix (board[row][col])
+     * @param brick       the initial falling brick ViewData
      */
     public void initGameView(int[][] boardMatrix, ViewData brick) {
         // Clear old nodes from gamePanel
         gamePanel.getChildren().clear();
-        
+
         // Clear old nodes from brickPanel
         brickPanel.getChildren().clear();
-        
+
         // boardMatrix is [rows][cols] = [y][x] in Java array notation
         // x = column, y = row
         numberOfRows = boardMatrix.length;  // rows (y dimension)
         numberOfColumns = boardMatrix[0].length;  // cols (x dimension)
-        
+
         // Calculate board pixel dimensions
         boardPixelWidth = numberOfColumns * BRICK_SIZE;
         boardPixelHeight = numberOfRows * BRICK_SIZE;
-        
+
         displayMatrix = new Rectangle[numberOfRows][numberOfColumns];
-        
+
         // Loop: y (row) as outer, x (col) as inner
         // Map board[y][x] → GridPane column=x row=y
         for (int y = 0; y < numberOfRows; y++) {
@@ -151,7 +217,7 @@ public class GuiController implements Initializable {
         int brickHeight = brick.getBrickData().length;  // rows (y dimension)
         int brickWidth = brick.getBrickData()[0].length;  // cols (x dimension)
         rectangles = new Rectangle[brickHeight][brickWidth];
-        
+
         // Loop: y (row) as outer, x (col) as inner
         // Map brick[y][x] → GridPane column=x row=y
         for (int y = 0; y < brickHeight; y++) {
@@ -163,13 +229,13 @@ public class GuiController implements Initializable {
                 brickPanel.add(rectangle, x, y);
             }
         }
-        
+
         // Store ViewData for centering updates
         lastViewData = brick;
-        
+
         // Set brick panel position relative to gamePanel
         updateBrickPanelPosition(brick);
-        
+
         // Center the board after initialization
         Platform.runLater(() -> {
             if (gameBoard.getScene() != null) {
@@ -179,7 +245,7 @@ public class GuiController implements Initializable {
                 }
             }
         });
-        
+
         timeLine = new Timeline(new KeyFrame(
                 Duration.millis(400),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
@@ -190,30 +256,40 @@ public class GuiController implements Initializable {
 
     /**
      * Sets up window and fullscreen centering listeners for the stage.
-     * Centers the board in windowed mode and when fullscreen mode is activated.
+     * <p>
+     * Registers listeners for fullscreen property changes and scene size
+     * changes to keep the board centered both horizontally and vertically.
+     * Also centers the board initially in windowed mode.
+     * </p>
+     *
+     * @param stage the JavaFX Stage to monitor for fullscreen and size changes
      */
     public void setupFullscreenCentering(Stage stage) {
         Scene scene = stage.getScene();
         if (scene == null) return;
-        
+
         // Listen to fullscreen property changes
-        stage.fullScreenProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (newValue) {
-                    // Fullscreen activated - center the board
-                    Platform.runLater(() -> centerBoardForFullscreen(stage));
-                } else {
-                    // Fullscreen deactivated - center in windowed mode
-                    Platform.runLater(() -> centerBoardInWindow(stage));
-                }
-            }
-        });
-        
+        stage.fullScreenProperty().addListener(
+                new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> observable,
+                                       Boolean oldValue, Boolean newValue) {
+                        if (newValue) {
+                            // Fullscreen activated - center the board
+                            Platform.runLater(() ->
+                                    centerBoardForFullscreen(stage));
+                        } else {
+                            // Fullscreen deactivated - center in windowed mode
+                            Platform.runLater(() -> centerBoardInWindow(stage));
+                        }
+                    }
+                });
+
         // Listen to scene size changes to keep board centered
         scene.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            public void changed(ObservableValue<? extends Number> observable,
+                               Number oldValue, Number newValue) {
                 Platform.runLater(() -> {
                     if (stage.isFullScreen()) {
                         centerBoardForFullscreen(stage);
@@ -223,10 +299,11 @@ public class GuiController implements Initializable {
                 });
             }
         });
-        
+
         scene.heightProperty().addListener(new ChangeListener<Number>() {
             @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+            public void changed(ObservableValue<? extends Number> observable,
+                               Number oldValue, Number newValue) {
                 Platform.runLater(() -> {
                     if (stage.isFullScreen()) {
                         centerBoardForFullscreen(stage);
@@ -236,37 +313,45 @@ public class GuiController implements Initializable {
                 });
             }
         });
-        
+
         // Initial centering in windowed mode
         Platform.runLater(() -> centerBoardInWindow(stage));
     }
 
     /**
      * Centers the board horizontally and vertically in windowed mode.
+     * <p>
+     * Calculates the center position based on scene dimensions and board
+     * pixel size, accounting for the BorderPane border width. Also centers
+     * the game over panel and updates brick panel position.
+     * </p>
+     *
+     * @param stage the JavaFX Stage containing the scene
      */
     private void centerBoardInWindow(Stage stage) {
         Scene scene = stage.getScene();
-        if (scene == null || boardPixelWidth == 0 || boardPixelHeight == 0 || gameBoard == null) return;
-        
+        if (scene == null || boardPixelWidth == 0 || boardPixelHeight == 0 ||
+                gameBoard == null) return;
+
         double sceneWidth = scene.getWidth();
         double sceneHeight = scene.getHeight();
-        
+
         // Calculate center position for the BorderPane (gameBoard)
         // Account for BorderPane's border width (12px from CSS)
         double borderWidth = 12.0;
         double totalWidth = boardPixelWidth + (borderWidth * 2);
         double totalHeight = boardPixelHeight + (borderWidth * 2);
-        
+
         double centerX = (sceneWidth - totalWidth) / 2.0;
         double centerY = (sceneHeight - totalHeight) / 2.0;
-        
+
         // Position the gameBoard (BorderPane container)
         gameBoard.setLayoutX(centerX);
         gameBoard.setLayoutY(centerY);
-        
+
         // Center the game over panel
         centerGameOverPanel(scene);
-        
+
         // Update brick panel position
         if (lastViewData != null) {
             updateBrickPanelPosition(lastViewData);
@@ -275,30 +360,37 @@ public class GuiController implements Initializable {
 
     /**
      * Centers the board horizontally and vertically in fullscreen mode.
+     * <p>
+     * Uses the same centering logic as windowed mode but applies it to the
+     * fullscreen scene dimensions.
+     * </p>
+     *
+     * @param stage the JavaFX Stage in fullscreen mode
      */
     private void centerBoardForFullscreen(Stage stage) {
         Scene scene = stage.getScene();
-        if (scene == null || boardPixelWidth == 0 || boardPixelHeight == 0 || gameBoard == null) return;
-        
+        if (scene == null || boardPixelWidth == 0 || boardPixelHeight == 0 ||
+                gameBoard == null) return;
+
         double sceneWidth = scene.getWidth();
         double sceneHeight = scene.getHeight();
-        
+
         // Calculate center position for the BorderPane (gameBoard)
         // Account for BorderPane's border width (12px from CSS)
         double borderWidth = 12.0;
         double totalWidth = boardPixelWidth + (borderWidth * 2);
         double totalHeight = boardPixelHeight + (borderWidth * 2);
-        
+
         double centerX = (sceneWidth - totalWidth) / 2.0;
         double centerY = (sceneHeight - totalHeight) / 2.0;
-        
+
         // Position the gameBoard (BorderPane container)
         gameBoard.setLayoutX(centerX);
         gameBoard.setLayoutY(centerY);
-        
+
         // Center the game over panel
         centerGameOverPanel(scene);
-        
+
         // Update brick panel position
         if (lastViewData != null) {
             updateBrickPanelPosition(lastViewData);
@@ -307,55 +399,84 @@ public class GuiController implements Initializable {
 
     /**
      * Centers the game over panel horizontally and vertically.
+     * <p>
+     * Calculates the center position based on scene dimensions and panel size.
+     * Uses preferred size, bounds, or default size if preferred size is
+     * unavailable.
+     * </p>
+     *
+     * @param scene the JavaFX Scene containing the panel
      */
     private void centerGameOverPanel(Scene scene) {
-        if (scene == null || groupNotification == null || gameOverPanel == null) return;
-        
+        if (scene == null || groupNotification == null ||
+                gameOverPanel == null) return;
+
         double sceneWidth = scene.getWidth();
         double sceneHeight = scene.getHeight();
-        
+
         // Get the preferred size of the game over panel
         double panelWidth = gameOverPanel.prefWidth(-1);
         double panelHeight = gameOverPanel.prefHeight(-1);
-        
+
         // If preferred size is not available, use bounds
         if (panelWidth <= 0 || panelHeight <= 0) {
             javafx.geometry.Bounds bounds = gameOverPanel.getBoundsInLocal();
             panelWidth = bounds.getWidth();
             panelHeight = bounds.getHeight();
         }
-        
+
         // If still not available, use default size
         if (panelWidth <= 0 || panelHeight <= 0) {
             panelWidth = 200; // Default width
             panelHeight = 50;  // Default height
         }
-        
+
         // Calculate center position
         double centerX = (sceneWidth - panelWidth) / 2.0;
         double centerY = (sceneHeight - panelHeight) / 2.0;
-        
+
         // Position the groupNotification (which contains the gameOverPanel)
         groupNotification.setLayoutX(centerX);
         groupNotification.setLayoutY(centerY);
     }
 
     /**
-     * Updates the brick panel position relative to gameBoard (BorderPane).
-     * Coordinate system: x = column, y = row
-     * brickPanel must be positioned INSIDE gameBoard
+     * Updates the brick panel position relative to the centered gameBoard.
+     * <p>
+     * Positions the falling brick panel based on the brick's (x, y) position
+     * and the gameBoard's layout position, accounting for the BorderPane
+     * border width.
+     * </p>
+     * <p>
+     * Coordinate system: x = column, y = row. The brickPanel must be
+     * positioned inside the gameBoard.
+     * </p>
+     *
+     * @param brick the ViewData containing the brick's current position
      */
     private void updateBrickPanelPosition(ViewData brick) {
         // x = column, y = row
         // Position brickPanel relative to gameBoard's position
         // Account for BorderPane's border width (12px from CSS)
         double borderWidth = 12.0;
-        double layoutX = gameBoard.getLayoutX() + borderWidth + brick.getxPosition() * BRICK_SIZE;
-        double layoutY = gameBoard.getLayoutY() + borderWidth + brick.getyPosition() * BRICK_SIZE;
+        double layoutX = gameBoard.getLayoutX() + borderWidth +
+                brick.getxPosition() * BRICK_SIZE;
+        double layoutY = gameBoard.getLayoutY() + borderWidth +
+                brick.getyPosition() * BRICK_SIZE;
         brickPanel.setLayoutX(layoutX);
         brickPanel.setLayoutY(layoutY);
     }
 
+    /**
+     * Maps a color value to a JavaFX Paint object.
+     * <p>
+     * Color values correspond to brick types: 0=transparent, 1=aqua, 2=blue
+     * violet, 3=dark green, 4=yellow, 5=red, 6=beige, 7=burlywood.
+     * </p>
+     *
+     * @param i the color value (0-7)
+     * @return the corresponding Paint object for rendering
+     */
     private Paint getFillColor(int i) {
         Paint returnPaint;
         switch (i) {
@@ -390,20 +511,27 @@ public class GuiController implements Initializable {
         return returnPaint;
     }
 
-
     /**
      * Refreshes the brick visual representation and position.
-     * Coordinate system: x = column, y = row
-     * Brick data: brick[y][x] (Java array notation: [row][col])
+     * <p>
+     * Updates the brick panel position and visual appearance based on the
+     * current ViewData. Only updates if the game is not paused.
+     * </p>
+     * <p>
+     * Coordinate system: x = column, y = row. Brick data is indexed as
+     * brick[row][col].
+     * </p>
+     *
+     * @param brick the ViewData containing the current brick state
      */
     private void refreshBrick(ViewData brick) {
         if (isPause.getValue() == Boolean.FALSE) {
             // Store ViewData for fullscreen updates
             lastViewData = brick;
-            
+
             // Update brick panel position using clean coordinate translation
             updateBrickPanelPosition(brick);
-            
+
             // Update brick visual representation
             // brick.getBrickData() is [rows][cols] = [y][x]
             int brickHeight = brick.getBrickData().length;
@@ -411,16 +539,26 @@ public class GuiController implements Initializable {
             // Loop: y (row) as outer, x (col) as inner
             for (int y = 0; y < brickHeight; y++) {
                 for (int x = 0; x < brickWidth; x++) {
-                    setRectangleData(brick.getBrickData()[y][x], rectangles[y][x]);
+                    setRectangleData(brick.getBrickData()[y][x],
+                            rectangles[y][x]);
                 }
             }
         }
     }
 
     /**
-     * Refreshes the game background.
-     * Coordinate system: x = column, y = row
-     * Board matrix: board[y][x] (Java array notation: [row][col])
+     * Refreshes the game background board display.
+     * <p>
+     * Updates all Rectangle objects in the displayMatrix to reflect the
+     * current board state. This is called after bricks are merged or rows
+     * are cleared.
+     * </p>
+     * <p>
+     * Coordinate system: x = column, y = row. Board matrix is indexed as
+     * board[row][col].
+     * </p>
+     *
+     * @param board the current board state matrix (board[row][col])
      */
     public void refreshGameBackground(int[][] board) {
         // board is [rows][cols] = [y][x]
@@ -434,17 +572,38 @@ public class GuiController implements Initializable {
         }
     }
 
+    /**
+     * Sets the visual properties of a Rectangle based on its color value.
+     * <p>
+     * Applies the fill color and rounded corner styling to the rectangle.
+     * </p>
+     *
+     * @param color     the color value (0-7) to apply
+     * @param rectangle the Rectangle to style
+     */
     private void setRectangleData(int color, Rectangle rectangle) {
         rectangle.setFill(getFillColor(color));
         rectangle.setArcHeight(9);
         rectangle.setArcWidth(9);
     }
 
+    /**
+     * Handles the automatic downward movement of the brick.
+     * <p>
+     * Processes the down event, displays score notifications if rows were
+     * cleared, and refreshes the brick display. This method is called
+     * automatically by the Timeline animation.
+     * </p>
+     *
+     * @param event the MoveEvent containing event type and source
+     */
     private void moveDown(MoveEvent event) {
         if (isPause.getValue() == Boolean.FALSE) {
             DownData downData = eventListener.onDownEvent(event);
-            if (downData.getClearRow() != null && downData.getClearRow().getLinesRemoved() > 0) {
-                NotificationPanel notificationPanel = new NotificationPanel("+" + downData.getClearRow().getScoreBonus());
+            if (downData.getClearRow() != null &&
+                    downData.getClearRow().getLinesRemoved() > 0) {
+                NotificationPanel notificationPanel = new NotificationPanel(
+                        "+" + downData.getClearRow().getScoreBonus());
                 groupNotification.getChildren().add(notificationPanel);
                 notificationPanel.showScore(groupNotification.getChildren());
             }
@@ -453,24 +612,59 @@ public class GuiController implements Initializable {
         gamePanel.requestFocus();
     }
 
+    /**
+     * Sets the event listener for handling game input events.
+     * <p>
+     * The event listener (typically a GameController) receives all user input
+     * events and coordinates with the game board.
+     * </p>
+     *
+     * @param eventListener the InputEventListener to handle game events
+     */
     public void setEventListener(InputEventListener eventListener) {
         this.eventListener = eventListener;
     }
 
+    /**
+     * Binds the score property to a UI component.
+     * <p>
+     * Currently not implemented. Reserved for future score display binding.
+     * </p>
+     *
+     * @param integerProperty the IntegerProperty to bind (currently unused)
+     */
     public void bindScore(IntegerProperty integerProperty) {
     }
 
+    /**
+     * Displays the game over state.
+     * <p>
+     * Stops the automatic movement timeline, shows the game over panel, sets
+     * the game over flag, and centers the game over panel.
+     * </p>
+     */
     public void gameOver() {
         timeLine.stop();
         gameOverPanel.setVisible(true);
         isGameOver.setValue(Boolean.TRUE);
-        
+
         // Center the game over panel when it's shown
         if (gameBoard.getScene() != null) {
             centerGameOverPanel(gameBoard.getScene());
         }
     }
 
+    /**
+     * Starts a new game.
+     * <p>
+     * Resets the game state, hides the game over panel, requests a new game
+     * from the event listener, restarts the timeline, and resets pause and
+     * game over flags.
+     * </p>
+     *
+     * @param actionEvent the action event that triggered this method (can be
+     *                    null)
+     */
     public void newGame(ActionEvent actionEvent) {
         timeLine.stop();
         gameOverPanel.setVisible(false);
@@ -481,6 +675,16 @@ public class GuiController implements Initializable {
         isGameOver.setValue(Boolean.FALSE);
     }
 
+    /**
+     * Handles the pause game action.
+     * <p>
+     * Currently only requests focus for the game panel. Pause functionality
+     * may be implemented in the future.
+     * </p>
+     *
+     * @param actionEvent the action event that triggered this method (can be
+     *                    null)
+     */
     public void pauseGame(ActionEvent actionEvent) {
         gamePanel.requestFocus();
     }

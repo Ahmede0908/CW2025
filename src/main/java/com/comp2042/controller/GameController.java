@@ -7,20 +7,66 @@ import com.comp2042.view.DownData;
 import com.comp2042.view.GuiController;
 import com.comp2042.view.ViewData;
 
+/**
+ * Controller class that coordinates game logic and user input in the MVC
+ * architecture.
+ * <p>
+ * This class acts as the Controller layer, connecting the Model (Board) and
+ * View (GuiController). It implements InputEventListener to handle user input
+ * events and translates them into board operations. It also manages the game
+ * flow including brick movement, rotation, merging, row clearing, and game
+ * over detection.
+ * </p>
+ * <p>
+ * Responsibilities:
+ * <ul>
+ *   <li>Handle user input events (left, right, down, rotate)</li>
+ *   <li>Coordinate board operations with view updates</li>
+ *   <li>Manage game state transitions (brick merging, row clearing, game over)</li>
+ *   <li>Update score based on user actions and cleared rows</li>
+ * </ul>
+ * </p>
+ *
+ * @author TetrisJFX Team
+ * @version 1.0
+ */
 public class GameController implements InputEventListener {
 
     private Board board = new SimpleBoard(10, 25);
 
     private final GuiController viewGuiController;
 
+    /**
+     * Constructs a new GameController and initializes the game.
+     * <p>
+     * Creates a new board, spawns the first brick, sets up the event listener
+     * connection, initializes the game view, and binds the score property.
+     * </p>
+     *
+     * @param c the GuiController to coordinate with
+     */
     public GameController(GuiController c) {
         viewGuiController = c;
         board.createNewBrick();
         viewGuiController.setEventListener(this);
-        viewGuiController.initGameView(board.getBoardMatrix(), board.getViewData());
+        viewGuiController.initGameView(board.getBoardMatrix(),
+                board.getViewData());
         viewGuiController.bindScore(board.getScore().scoreProperty());
     }
 
+    /**
+     * Handles the down movement event.
+     * <p>
+     * Attempts to move the brick down. If movement fails, merges the brick
+     * into the board, clears completed rows, updates the score, spawns a new
+     * brick, and checks for game over. If movement succeeds and was triggered
+     * by the user, adds 1 point to the score.
+     * </p>
+     *
+     * @param event the move event containing event type and source
+     * @return DownData containing the cleared row information and updated
+     *         view data
+     */
     @Override
     public DownData onDownEvent(MoveEvent event) {
         boolean canMove = board.moveBrickDown();
@@ -45,29 +91,62 @@ public class GameController implements InputEventListener {
         return new DownData(clearRow, board.getViewData());
     }
 
+    /**
+     * Handles the left movement event.
+     * <p>
+     * Attempts to move the brick left and returns the updated view data.
+     * </p>
+     *
+     * @param event the move event containing event type and source
+     * @return ViewData containing the current brick state and position
+     */
     @Override
     public ViewData onLeftEvent(MoveEvent event) {
         board.moveBrickLeft();
         return board.getViewData();
     }
 
+    /**
+     * Handles the right movement event.
+     * <p>
+     * Attempts to move the brick right and returns the updated view data.
+     * </p>
+     *
+     * @param event the move event containing event type and source
+     * @return ViewData containing the current brick state and position
+     */
     @Override
     public ViewData onRightEvent(MoveEvent event) {
         board.moveBrickRight();
         return board.getViewData();
     }
 
+    /**
+     * Handles the rotation event.
+     * <p>
+     * Attempts to rotate the brick 90 degrees clockwise and returns the
+     * updated view data.
+     * </p>
+     *
+     * @param event the move event containing event type and source
+     * @return ViewData containing the current brick state and position
+     */
     @Override
     public ViewData onRotateEvent(MoveEvent event) {
         board.rotateLeftBrick();
         return board.getViewData();
     }
 
-
+    /**
+     * Creates a new game by resetting the board and refreshing the view.
+     * <p>
+     * Resets the board state and updates the view to reflect the new game
+     * state.
+     * </p>
+     */
     @Override
     public void createNewGame() {
         board.newGame();
         viewGuiController.refreshGameBackground(board.getBoardMatrix());
     }
 }
-

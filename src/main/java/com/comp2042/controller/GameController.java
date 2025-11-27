@@ -3,6 +3,7 @@ package com.comp2042.controller;
 import com.comp2042.board.Board;
 import com.comp2042.board.SimpleBoard;
 import com.comp2042.model.ClearRow;
+import com.comp2042.model.HardDropResult;
 import com.comp2042.view.DownData;
 import com.comp2042.view.GuiController;
 import com.comp2042.view.ViewData;
@@ -133,6 +134,36 @@ public class GameController implements InputEventListener {
     public ViewData onRotateEvent(MoveEvent event) {
         board.rotateLeftBrick();
         return board.getViewData();
+    }
+
+    /**
+     * Handles the hard drop event.
+     * <p>
+     * Performs an instant hard drop of the current brick to the lowest possible
+     * valid position. The brick is locked immediately, rows are cleared if
+     * applicable, and a new brick is spawned. Hard drop bonus points are
+     * calculated and added to the score.
+     * </p>
+     *
+     * @return HardDropResult containing the final ViewData, ClearRow result,
+     *         number of rows dropped, and game over status
+     */
+    public HardDropResult onHardDropEvent() {
+        if (board instanceof SimpleBoard) {
+            HardDropResult result = ((SimpleBoard) board).hardDrop();
+            
+            // Refresh the board background
+            viewGuiController.refreshGameBackground(board.getBoardMatrix());
+            
+            // Check for game over (hardDrop() already checked this via createNewBrick())
+            if (result.isGameOver()) {
+                viewGuiController.gameOver();
+            }
+            
+            return result;
+        }
+        // Fallback if board is not SimpleBoard (shouldn't happen)
+        return new HardDropResult(board.getViewData(), null, 0, false);
     }
 
     /**

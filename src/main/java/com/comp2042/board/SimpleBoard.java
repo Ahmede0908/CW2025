@@ -8,6 +8,7 @@ import com.comp2042.logic.RowClearer;
 import com.comp2042.model.Brick;
 import com.comp2042.model.BrickGenerator;
 import com.comp2042.model.ClearRow;
+import com.comp2042.model.HardDropResult;
 import com.comp2042.model.RandomBrickGenerator;
 import com.comp2042.model.Score;
 import com.comp2042.view.ViewData;
@@ -321,6 +322,69 @@ public class SimpleBoard implements Board {
     @Override
     public Score getScore() {
         return score;
+    }
+
+    /**
+     * Performs a hard drop operation, instantly dropping the current brick
+     * to the lowest possible valid position.
+     * <p>
+     * This method:
+     * <ol>
+     *   <li>Calculates the lowest valid Y position using collision detection</li>
+     *   <li>Moves the brick directly to that position</li>
+     *   <li>Merges the brick into the board</li>
+     *   <li>Clears any completed rows</li>
+     *   <li>Spawns a new brick</li>
+     *   <li>Calculates and applies hard drop bonus (2 points per row dropped)</li>
+     * </ol>
+     * </p>
+     * <p>
+     * Coordinate system: x = column, y = row. The brick is moved from its
+     * current Y position to the lowest valid Y position without collision.
+     * </p>
+     *
+     * @return HardDropResult containing the final ViewData, ClearRow result,
+     *         and number of rows dropped
+     */
+    public HardDropResult hardDrop() {
+        int[][] currentMatrix = MatrixOperations.copy(currentGameMatrix);
+        int[][] currentShape = brickRotator.getCurrentShape();
+        int currentX = (int) currentOffset.getX();
+        int currentY = (int) currentOffset.getY();
+
+        // Calculate the lowest valid Y position (same logic as calculateGhostYPosition)
+        int dropY = currentY;
+        while (dropY < height - 1 &&
+               CollisionHandler.canMoveDown(currentMatrix, currentShape, currentX, dropY)) {
+            dropY++;
+        }
+        // dropY is now the lowest valid position
+
+        // Calculate number of rows dropped
+        int rowsDropped = dropY - currentY;
+
+        // Move the brick to the drop position
+        currentOffset = new Point(currentX, dropY);
+
+        // Merge the brick into the board
+        mergeBrickToBackground();
+
+        // Clear rows and get the result
+        ClearRow clearRow = clearRows();
+
+        // Add hard drop bonus: 2 points per row dropped
+        if (rowsDropped > 0) {
+            int hardDropBonus = rowsDropped * 2;
+            score.addScore(hardDropBonus);
+        }
+
+        // Spawn new brick (createNewBrick returns true if game over)
+        boolean gameOver = createNewBrick();
+
+        // Get the updated view data (after new brick spawn)
+        ViewData viewData = getViewData();
+
+        return new HardDropResult(viewData, clearRow, rowsDropped, gameOver);
     }
 
     /**

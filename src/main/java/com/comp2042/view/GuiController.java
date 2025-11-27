@@ -4,6 +4,7 @@ import com.comp2042.controller.EventSource;
 import com.comp2042.controller.EventType;
 import com.comp2042.controller.InputEventListener;
 import com.comp2042.controller.MoveEvent;
+import com.comp2042.model.HardDropResult;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -187,6 +188,17 @@ public class GuiController implements Initializable {
                     restartGame(null);
                     keyEvent.consume();
                     return;
+                }
+
+                // SPACE key performs hard drop (works when not paused and not game over)
+                if (keyEvent.getCode() == KeyCode.SPACE) {
+                    if (isPause.getValue() == Boolean.FALSE &&
+                            isGameOver.getValue() == Boolean.FALSE &&
+                            eventListener != null) {
+                        handleHardDrop();
+                        keyEvent.consume();
+                        return;
+                    }
                 }
 
                 // Only process movement keys when not paused and not game over
@@ -1254,6 +1266,44 @@ public class GuiController implements Initializable {
      */
     public void pauseGame(ActionEvent actionEvent) {
         togglePause();
+    }
+
+    /**
+     * Handles the hard drop operation triggered by the SPACE key.
+     * <p>
+     * Performs an instant hard drop of the current brick to the lowest possible
+     * position. The brick is locked immediately, rows are cleared if applicable,
+     * and the board and score are updated. Displays score notifications if rows
+     * were cleared.
+     * </p>
+     * <p>
+     * This method is only called when the game is not paused and not game over.
+     * </p>
+     */
+    private void handleHardDrop() {
+        if (eventListener == null) return;
+
+        // Cast eventListener to GameController to access onHardDropEvent()
+        if (eventListener instanceof com.comp2042.controller.GameController) {
+            com.comp2042.controller.GameController gameController =
+                    (com.comp2042.controller.GameController) eventListener;
+            
+            com.comp2042.model.HardDropResult result = gameController.onHardDropEvent();
+            
+            // Display score notification if rows were cleared
+            if (result.getClearRow() != null &&
+                    result.getClearRow().getLinesRemoved() > 0) {
+                NotificationPanel notificationPanel = new NotificationPanel(
+                        "+" + result.getClearRow().getScoreBonus());
+                groupNotification.getChildren().add(notificationPanel);
+                notificationPanel.showScore(groupNotification.getChildren());
+            }
+            
+            // Refresh the brick display with the new brick
+            refreshBrick(result.getViewData());
+        }
+        
+        gamePanel.requestFocus();
     }
 
     /**

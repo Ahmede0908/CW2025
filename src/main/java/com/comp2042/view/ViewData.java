@@ -34,6 +34,7 @@ public final class ViewData {
     private final int score;
     private final int totalLines;
     private final int highScore;
+    private final int level;
 
     /**
      * Constructs a new ViewData object with the specified brick and score information.
@@ -49,10 +50,11 @@ public final class ViewData {
      * @param score          the current game score
      * @param totalLines     the total number of lines cleared
      * @param highScore      the high score (persists across games)
+     * @param level          the current level (calculated from lines cleared)
      */
     public ViewData(int[][] brickData, int xPosition, int yPosition,
                     int ghostYPosition, int[][] nextBrickData,
-                    int score, int totalLines, int highScore) {
+                    int score, int totalLines, int highScore, int level) {
         this.brickData = brickData;
         this.xPosition = xPosition;
         this.yPosition = yPosition;
@@ -61,6 +63,7 @@ public final class ViewData {
         this.score = score;
         this.totalLines = totalLines;
         this.highScore = highScore;
+        this.level = level;
     }
 
     /**
@@ -147,5 +150,17 @@ public final class ViewData {
      */
     public int getHighScore() {
         return highScore;
+    }
+
+    /**
+     * Returns the current level (calculated from lines cleared).
+     * <p>
+     * Level increases every 10 lines cleared. Level starts at 1.
+     * </p>
+     *
+     * @return the current level
+     */
+    public int getLevel() {
+        return level;
     }
 }

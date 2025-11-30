@@ -23,7 +23,7 @@ class ViewDataTest {
         int[][] nextBrick = {
                 {2, 2}
         };
-        ViewData viewData = new ViewData(originalBrick, 0, 0, nextBrick);
+        ViewData viewData = new ViewData(originalBrick, 0, 0, 0, nextBrick, 0, 0, 0, 1);
 
         // Act
         int[][] copy1 = viewData.getBrickData();
@@ -52,7 +52,7 @@ class ViewDataTest {
         int[][] originalNext = {
                 {2, 2, 2}
         };
-        ViewData viewData = new ViewData(brick, 0, 0, originalNext);
+        ViewData viewData = new ViewData(brick, 0, 0, 0, originalNext, 0, 0, 0, 1);
 
         // Act
         int[][] copy1 = viewData.getNextBrickData();
@@ -82,7 +82,7 @@ class ViewDataTest {
         int expectedX = 3;
 
         // Act
-        ViewData viewData = new ViewData(brick, expectedX, 0, next);
+        ViewData viewData = new ViewData(brick, expectedX, 0, 0, next, 0, 0, 0, 1);
 
         // Assert
         assertEquals(expectedX, viewData.getxPosition(),
@@ -98,7 +98,7 @@ class ViewDataTest {
         int expectedY = 5;
 
         // Act
-        ViewData viewData = new ViewData(brick, 0, expectedY, next);
+        ViewData viewData = new ViewData(brick, 0, expectedY, 0, next, 0, 0, 0, 1);
 
         // Assert
         assertEquals(expectedY, viewData.getyPosition(),
@@ -114,7 +114,7 @@ class ViewDataTest {
                 {3, 4}
         };
         int[][] next = {{5}};
-        ViewData viewData = new ViewData(brick, 0, 0, next);
+        ViewData viewData = new ViewData(brick, 0, 0, 0, next, 0, 0, 0, 1);
 
         // Act - Get copy and modify it
         int[][] copy = viewData.getBrickData();
@@ -137,7 +137,7 @@ class ViewDataTest {
         int[][] emptyNext = {};
 
         // Act
-        ViewData viewData = new ViewData(emptyBrick, 0, 0, emptyNext);
+        ViewData viewData = new ViewData(emptyBrick, 0, 0, 0, emptyNext, 0, 0, 0, 1);
 
         // Assert
         assertNotNull(viewData.getBrickData());
@@ -154,7 +154,7 @@ class ViewDataTest {
         largeNext[4][4] = 3;
 
         // Act
-        ViewData viewData = new ViewData(largeBrick, 0, 0, largeNext);
+        ViewData viewData = new ViewData(largeBrick, 0, 0, 0, largeNext, 0, 0, 0, 1);
 
         // Assert
         int[][] copy = viewData.getBrickData();

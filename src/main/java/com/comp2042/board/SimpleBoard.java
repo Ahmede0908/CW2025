@@ -272,7 +272,8 @@ public class SimpleBoard implements Board {
                 brickGenerator.getNextBrick().getShapeMatrix().get(0),
                 score.getCurrentScore(),
                 score.getTotalLines(),
-                score.getHighScore());
+                score.getHighScore(),
+                score.getCurrentLevel());
     }
 
     /**

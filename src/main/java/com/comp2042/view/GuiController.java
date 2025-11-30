@@ -109,6 +109,9 @@ public class GuiController implements Initializable {
     private VBox scoreboardContainer;
 
     @FXML
+    private Label currentLevelLabel;
+
+    @FXML
     private Label currentScoreLabel;
 
     @FXML
@@ -136,6 +139,9 @@ public class GuiController implements Initializable {
     private Timeline timeLine;
 
     private final BooleanProperty isPause = new SimpleBooleanProperty();
+    
+    // Reference to Score object for level-based speed calculation
+    private com.comp2042.model.Score scoreReference;
 
     private final BooleanProperty isGameOver = new SimpleBooleanProperty();
 
@@ -1028,6 +1034,9 @@ public class GuiController implements Initializable {
      * @param viewData the ViewData containing current score information
      */
     public void refreshScoreboard(ViewData viewData) {
+        if (currentLevelLabel != null) {
+            currentLevelLabel.setText(String.valueOf(viewData.getLevel()));
+        }
         if (currentScoreLabel != null) {
             currentScoreLabel.setText(String.valueOf(viewData.getScore()));
         }
@@ -1191,12 +1200,74 @@ public class GuiController implements Initializable {
     /**
      * Binds the score property to a UI component.
      * <p>
-     * Currently not implemented. Reserved for future score display binding.
+     * Currently score updates are handled via refreshScoreboard() instead
+     * of property binding.
      * </p>
      *
      * @param integerProperty the IntegerProperty to bind (currently unused)
      */
     public void bindScore(IntegerProperty integerProperty) {
+        // Score updates are handled via refreshScoreboard()
+    }
+
+    /**
+     * Binds the level property to update game speed automatically.
+     * <p>
+     * When the level changes, the timeline speed is automatically adjusted
+     * to make pieces fall faster. Listens to level changes and updates the
+     * timeline speed accordingly.
+     * </p>
+     *
+     * @param levelProperty the IntegerProperty for the current level
+     * @param score the Score object to calculate speed from
+     */
+    public void bindLevel(IntegerProperty levelProperty, com.comp2042.model.Score score) {
+        if (levelProperty == null || score == null) return;
+        
+        // Store score reference for speed updates
+        this.scoreReference = score;
+        
+        // Add listener to update timeline speed when level changes
+        levelProperty.addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !newValue.equals(oldValue)) {
+                updateGameSpeed();
+            }
+        });
+        
+        // Initial speed setup
+        updateGameSpeed();
+    }
+
+    /**
+     * Updates the timeline speed based on the current level.
+     * <p>
+     * Calculates the new game speed from the score object and updates
+     * the timeline keyframe duration. This makes pieces fall faster as
+     * the level increases.
+     * </p>
+     */
+    private void updateGameSpeed() {
+        if (timeLine == null || scoreReference == null) return;
+        
+        // Get current speed based on level
+        long newSpeedMillis = scoreReference.getGameSpeedMillis();
+        
+        // Stop the timeline
+        boolean wasPlaying = timeLine.getStatus() == javafx.animation.Animation.Status.RUNNING;
+        timeLine.stop();
+        
+        // Create new timeline with updated speed
+        timeLine = new Timeline(new KeyFrame(
+                Duration.millis(newSpeedMillis),
+                ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
+        ));
+        timeLine.setCycleCount(Timeline.INDEFINITE);
+        
+        // Resume if it was playing (and not paused or game over)
+        if (wasPlaying && isPause.getValue() == Boolean.FALSE && 
+            isGameOver.getValue() == Boolean.FALSE) {
+            timeLine.play();
+        }
     }
 
     /**
@@ -1362,13 +1433,18 @@ public class GuiController implements Initializable {
             refreshBrick(resetViewData);
         }
 
-        // Reinitialize the timeline with default speed (400ms)
-        timeLine = new Timeline(new KeyFrame(
-                Duration.millis(400),
-                ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
-        ));
-        timeLine.setCycleCount(Timeline.INDEFINITE);
-        timeLine.play();
+        // Reinitialize the timeline with level-appropriate speed
+        if (scoreReference != null) {
+            updateGameSpeed();
+        } else {
+            // Fallback to default speed if score reference not available
+            timeLine = new Timeline(new KeyFrame(
+                    Duration.millis(400),
+                    ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
+            ));
+            timeLine.setCycleCount(Timeline.INDEFINITE);
+            timeLine.play();
+        }
 
         // Request focus for keyboard input
         gamePanel.requestFocus();

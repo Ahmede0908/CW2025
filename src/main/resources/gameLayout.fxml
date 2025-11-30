@@ -27,8 +27,12 @@
     <!-- Scoreboard Panel -->
     <VBox fx:id="scoreboardContainer" alignment="CENTER" spacing="8"
           style="-fx-padding: 15; -fx-border-color: #888888; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-color: #2a2a2a; -fx-background-radius: 5;">
-        <Label text="SCORE" 
+        <Label text="LEVEL" 
                style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+        <Label fx:id="currentLevelLabel" text="1" 
+               style="-fx-text-fill: #00ff00; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+        <Label text="SCORE" 
+               style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 0 0 0;"/>
         <Label fx:id="currentScoreLabel" text="0" 
                style="-fx-text-fill: #ffffff; -fx-font-size: 18px;"/>
         <Label text="LINES" 

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.Button?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.comp2042.view.SettingsController"
+      alignment="CENTER" spacing="30"
+      style="-fx-background-color: #111;">
+
+    <Text text="Settings" style="-fx-font-size: 30px; -fx-fill: white;"/>
+
+    <Button fx:id="btnBack" text="Back to Menu" prefWidth="180"/>
+
+</VBox>

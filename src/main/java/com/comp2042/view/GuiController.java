@@ -247,6 +247,12 @@ public class GuiController implements Initializable {
         reflection.setTopOffset(-12);
     }
 
+    private SceneManager sceneManager;
+
+    public void setSceneManager(SceneManager sceneManager) {
+        this.sceneManager = sceneManager;
+    }
+
     /**
      * Initializes the pause overlay components.
      * <p>
@@ -1074,7 +1080,7 @@ public class GuiController implements Initializable {
      *
      * @param brick the ViewData containing the current brick state
      */
-    private void refreshBrick(ViewData brick) {
+    public void refreshBrick(ViewData brick) {
         if (isPause.getValue() == Boolean.FALSE) {
             // Store ViewData for fullscreen updates
             lastViewData = brick;
@@ -1309,21 +1315,26 @@ public class GuiController implements Initializable {
      *                    null)
      */
     public void newGame(ActionEvent actionEvent) {
-        timeLine.stop();
+        timeLine.stop(); // stop old timeline
+
         gameOverPanel.setVisible(false);
-        hidePauseOverlay();
-        
-        // Show ghost panel for new game
-        if (ghostPanel != null) {
-            ghostPanel.setVisible(true);
-        }
-        
         eventListener.createNewGame();
         gamePanel.requestFocus();
+
+        // 🟢 recreate Timeline for new game
+        timeLine = new Timeline(new KeyFrame(Duration.millis(400),
+                ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))));
+        timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
-        isPause.setValue(Boolean.FALSE);
-        isGameOver.setValue(Boolean.FALSE);
+
+        isPause.set(false);
+        isGameOver.set(false);
     }
+
+    public void moveDownFromController() {
+        moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD));
+    }
+
 
     /**
      * Handles the pause game action.
@@ -1376,6 +1387,8 @@ public class GuiController implements Initializable {
         
         gamePanel.requestFocus();
     }
+
+
 
     /**
      * Restarts the game completely.

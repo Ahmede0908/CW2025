@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.geometry.Pos?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.Button?>
+<?import java.net.URL?>
 
-<VBox spacing="20" alignment="CENTER"
-      xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.comp2042.view.MenuController"
-      style="-fx-background-color: #1a1a1a;">
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.comp2042.view.MenuController"
+           styleClass="menu-root">
 
-    <Label text="TETRIS FX"
-           style="-fx-text-fill: white; -fx-font-size: 40px; -fx-font-weight: bold;"/>
+    <VBox alignment="CENTER" spacing="30" styleClass="menu-box">
 
-    <Button fx:id="btnStart"
-            text="Start Game"
-            prefWidth="200"
-            style="-fx-font-size: 18px;"/>
+        <Text text="TETRIS FX"
+              styleClass="menu-title"/>
 
-    <Button fx:id="btnExit"
-            text="Exit"
-            prefWidth="200"
-            style="-fx-font-size: 18px;"/>
+        <Button fx:id="btnStart" text="Start Game"   styleClass="menu-button"/>
+        <Button fx:id="btnSettings" text="Settings"  styleClass="menu-button"/>
+        <Button fx:id="btnExit" text="Exit"          styleClass="menu-button"/>
 
-</VBox>
+    </VBox>
+
+    <stylesheets>
+        <URL value="@menu_style.css"/>
+    </stylesheets>
+
+</StackPane>

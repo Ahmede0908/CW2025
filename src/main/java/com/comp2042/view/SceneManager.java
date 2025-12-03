@@ -6,60 +6,86 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+
 public class SceneManager {
 
     private final Stage stage;
 
     public SceneManager(Stage stage) {
         this.stage = stage;
+        this.stage.setTitle("TetrisJFX");
     }
 
-    /** Shows the main menu screen */
+    private FXMLLoader load(String fxml) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource(fxml));
+        if (loader.getLocation() == null) {
+            throw new IOException("Cannot load FXML: " + fxml);
+        }
+        return loader;
+    }
+
+    // ---------------- MENU ----------------
     public void showMenu() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/menu.fxml"));
+            FXMLLoader loader = load("menu.fxml");
             Parent root = loader.load();
 
-            MenuController menuController = loader.getController();
-            menuController.setSceneManager(this);
+            MenuController controller = loader.getController();
+            controller.setSceneManager(this);
 
-            Scene menuScene = new Scene(root, 400, 500);
-            stage.setScene(menuScene);
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.centerOnScreen();
+            stage.show();
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /** Shows the Tetris game screen */
-    public void showGame() {
+    // ---------------- SETTINGS ----------------
+    public void showSettings() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/gameLayout.fxml"));
+            FXMLLoader loader = load("settings.fxml");
             Parent root = loader.load();
 
-            GuiController controller = loader.getController();
+            SettingsController controller = loader.getController();
+            controller.setSceneManager(this);
+
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.centerOnScreen();
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ---------------- GAME ----------------
+    public void showGame() {
+        try {
+            FXMLLoader loader = load("gameLayout.fxml");
+            Parent root = loader.load();
+
+            GuiController gui = loader.getController();
+            gui.setSceneManager(this);
 
             Scene scene = new Scene(root, 300, 510);
             stage.setScene(scene);
+            stage.centerOnScreen();
+            stage.show();
 
-            // Your fullscreen centering logic
-            stage.fullScreenProperty().addListener((obs, old, isFull) -> {
-                if (isFull) controller.setupFullscreenCentering(stage);
-            });
+            gui.setupFullscreenCentering(stage);
+            new GameController(gui);
 
-            // Start the game
-            new GameController(controller);
-
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public Stage getStage() {
-        return stage;
-    }
-
-    /** Closes the game */
+    // ---------------- EXIT ----------------
     public void exitGame() {
         stage.close();
     }

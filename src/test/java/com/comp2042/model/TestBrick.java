@@ -27,3 +27,4 @@ class TestBrick implements Brick {
     }
 }
 
+

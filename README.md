@@ -33,6 +33,7 @@ mvn javafx:run
 - Pause/resume system
 - Restart option
 - High-score persistence
+- Level progression system (speed increases every 10 lines)
 - JUnit Test Suite
 - Improved collision & movement logic
 - Updated UI & Game Over panel
@@ -48,7 +49,6 @@ All major features are fully working.
 ## Features Not Implemented
 
 - Hold piece system
-- Level progression
 - Sound/music
 
 ---
@@ -64,7 +64,7 @@ All major features are fully working.
 - **NoRotationStrategy** – `board/rotation/` – for square bricks
 - **NextShapeInfo** – `logic/` – data container for rotation info
 - **HardDropResult** – `model/` – result data for hard drop operations
-- **Score** – `model/` – score management with JavaFX properties
+- **Score** – `model/` – score management with JavaFX properties, level tracking, and dynamic speed calculation
 - **ViewData** – `view/` – MVC data transfer object
 - **DownData** – `view/` – down movement event data
 - **NotificationPanel** – `view/` – animated score notifications
@@ -76,11 +76,11 @@ All major features are fully working.
 ## Modified Java Classes
 
 - **SimpleBoard** – fixed indexing, delegated logic to helper classes, added ghost/next preview support
-- **GuiController** – full rendering rewrite, added UI features (ghost piece, pause overlay, scoreboard)
-- **GameController** – routing logic updates, restart/hard drop handling
+- **GuiController** – full rendering rewrite, added UI features (ghost piece, pause overlay, scoreboard), level display, and dynamic game speed adjustment based on level
+- **GameController** – routing logic updates, restart/hard drop handling, level binding setup
 - **MatrixOperations** – fixed rotation, merging, and bounds checking
-- **Score** – added scoring system + high score tracking
-- **ViewData** – cleaner MVC separation, added ghost position and score fields
+- **Score** – added scoring system + high score tracking + level progression (increases every 10 lines cleared) with dynamic speed calculation
+- **ViewData** – cleaner MVC separation, added ghost position, score fields, and level information
 - **Main** – updated initialization with fullscreen centering
 
 ---

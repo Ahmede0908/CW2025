@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20" alignment="CENTER"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.comp2042.view.MenuController"
+      style="-fx-background-color: #1a1a1a;">
+
+    <Label text="TETRIS FX"
+           style="-fx-text-fill: white; -fx-font-size: 40px; -fx-font-weight: bold;"/>
+
+    <Button fx:id="btnStart"
+            text="Start Game"
+            prefWidth="200"
+            style="-fx-font-size: 18px;"/>
+
+    <Button fx:id="btnExit"
+            text="Exit"
+            prefWidth="200"
+            style="-fx-font-size: 18px;"/>
+
+</VBox>

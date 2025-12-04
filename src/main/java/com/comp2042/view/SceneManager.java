@@ -58,8 +58,16 @@ public class SceneManager {
             
             new GameController(gui);
 
-            instance.stage.setScene(new Scene(root, 750, 600));
+            Scene scene = new Scene(root, 750, 600);
+            instance.stage.setScene(scene);
             instance.stage.show();
+            
+            // Setup centering after scene is shown to ensure proper layout
+            if (gui != null) {
+                javafx.application.Platform.runLater(() -> {
+                    gui.setupFullscreenCentering(instance.stage);
+                });
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -9,58 +9,55 @@
 <?import java.net.URL?>
 <Pane fx:controller="com.comp2042.view.GuiController"
       xmlns:fx="http://javafx.com/fxml">
-    <GridPane fx:id="brickPanel" vgap="1" hgap="1"/>
+    
+    <!-- Main Game Board with Teal Border (rendered first, behind other panels) -->
     <BorderPane styleClass="gameBoard" fx:id="gameBoard">
         <center>
             <GridPane fx:id="gamePanel" hgap="1" vgap="1"/>
         </center>
     </BorderPane>
     
-    <!-- Ghost piece panel (positioned programmatically) -->
+    <!-- Ghost Piece Panel (positioned programmatically, behind active brick) -->
     <GridPane fx:id="ghostPanel" hgap="1" vgap="1" mouseTransparent="true"/>
+    
+    <!-- Falling Brick Panel (rendered last, on top of game board) -->
+    <GridPane fx:id="brickPanel" vgap="1" hgap="1"/>
 
     <!-- Next Piece Preview Panel -->
-    <VBox fx:id="nextPieceContainer" alignment="CENTER" spacing="5">
-        <Label fx:id="nextPieceLabel" text="NEXT" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;"/>
-        <GridPane fx:id="nextPanel" hgap="1" vgap="1" 
-                  style="-fx-padding: 10; -fx-border-color: #888888; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-color: #2a2a2a; -fx-background-radius: 5;"
-                  alignment="CENTER"/>
+    <VBox fx:id="nextPieceContainer" alignment="CENTER" spacing="8" styleClass="next-box">
+        <Label fx:id="nextPieceLabel" text="NEXT" styleClass="next-label"/>
+        <GridPane fx:id="nextPanel" hgap="1" vgap="1" styleClass="next-panel" alignment="CENTER"/>
     </VBox>
 
     <!-- Scoreboard Panel -->
-    <VBox fx:id="scoreboardContainer" alignment="CENTER" spacing="8"
-          style="-fx-padding: 15; -fx-border-color: #888888; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-color: #2a2a2a; -fx-background-radius: 5;">
-        <Label text="LEVEL" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold;"/>
-        <Label fx:id="currentLevelLabel" text="1" 
-               style="-fx-text-fill: #00ff00; -fx-font-size: 24px; -fx-font-weight: bold;"/>
-        <Label text="SCORE" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 0 0 0;"/>
-        <Label fx:id="currentScoreLabel" text="0" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 18px;"/>
-        <Label text="LINES" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 0 0 0;"/>
-        <Label fx:id="totalLinesLabel" text="0" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 18px;"/>
-        <Label text="HIGH SCORE" 
-               style="-fx-text-fill: #ffffff; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 0 0 0;"/>
-        <Label fx:id="highScoreLabel" text="0" 
-               style="-fx-text-fill: #ffff00; -fx-font-size: 18px;"/>
-        <Button fx:id="restartButton" text="Restart" 
+    <VBox fx:id="scoreboardContainer" alignment="CENTER" spacing="10" styleClass="score-box">
+        <Label text="LEVEL" styleClass="score-label"/>
+        <Label fx:id="currentLevelLabel" text="1" styleClass="score-value-level"/>
+        
+        <Label text="SCORE" styleClass="score-label"/>
+        <Label fx:id="currentScoreLabel" text="0" styleClass="score-value"/>
+        
+        <Label text="LINES" styleClass="score-label"/>
+        <Label fx:id="totalLinesLabel" text="0" styleClass="score-value"/>
+        
+        <Label text="HIGH SCORE" styleClass="score-label"/>
+        <Label fx:id="highScoreLabel" text="0" styleClass="score-value-high"/>
+        
+        <Button fx:id="restartButton" text="RESTART" 
                 onAction="#restartGame"
-                style="-fx-padding: 10 20 10 20; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: #ffffff; -fx-border-color: #888888; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-cursor: hand; -fx-padding: 10 0 0 0;"
-                styleClass="restart-button"/>
-        <Button fx:id="btnMainMenu" text="Main Menu" 
+                styleClass="retro-button-start"/>
+        <Button fx:id="btnMainMenu" text="MAIN MENU" 
                 onAction="#goToMainMenu"
-                style="-fx-padding: 10 20 10 20; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: #ffffff; -fx-border-color: #888888; -fx-border-width: 1; -fx-border-radius: 3; -fx-background-radius: 3; -fx-cursor: hand; -fx-padding: 10 0 0 0;"/>
+                styleClass="retro-button"/>
     </VBox>
 
+    <!-- Notification and Game Over Group -->
     <Group fx:id="groupNotification">
         <VBox alignment="CENTER">
             <GameOverPanel fx:id="gameOverPanelFXML"/>
         </VBox>
     </Group>
+    
     <stylesheets>
         <URL value="@window_style.css"/>
     </stylesheets>

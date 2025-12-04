@@ -1,21 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.Button?>
+<?import java.net.URL?>
 
-<VBox xmlns="http://javafx.com/javafx"
+<Pane xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.comp2042.view.MenuController"
-      alignment="CENTER"
-      spacing="20"
-      style="-fx-background-color: black;">
-
-    <Text text="TETRIS FX"
-          style="-fx-font-size: 48px; -fx-fill: cyan; -fx-font-weight: bold;"/>
-
-    <Button fx:id="btnStart" text="Start Game" prefWidth="200"/>
-    <Button fx:id="btnSettings" text="Settings" prefWidth="200"/>
-    <Button fx:id="btnExit" text="Exit" prefWidth="200"/>
-
-</VBox>
+      prefWidth="750" prefHeight="600">
+    
+    <!-- Centered Menu Container with Teal Frame -->
+    <VBox alignment="CENTER" spacing="30" styleClass="menu-frame"
+          layoutX="125" layoutY="100"
+          prefWidth="500" prefHeight="400">
+        <Text text="TETRIS FX" styleClass="menu-title"/>
+        <Text text="CLASSIC EDITION" styleClass="menu-subtitle"/>
+        
+        <VBox alignment="CENTER" spacing="15" style="-fx-padding: 20px 0px;">
+            <Button fx:id="btnStart" text="START GAME" 
+                    prefWidth="250" prefHeight="50"
+                    styleClass="retro-button-start"/>
+            <Button fx:id="btnSettings" text="SETTINGS" 
+                    prefWidth="250" prefHeight="50"
+                    styleClass="retro-button"/>
+            <Button fx:id="btnExit" text="EXIT" 
+                    prefWidth="250" prefHeight="50"
+                    styleClass="retro-button"/>
+        </VBox>
+    </VBox>
+    
+    <stylesheets>
+        <URL value="@window_style.css"/>
+    </stylesheets>
+</Pane>

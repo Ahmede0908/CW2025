@@ -333,7 +333,7 @@ public class GuiController implements Initializable {
         double textHeight = pauseText.getLayoutBounds().getHeight();
 
         // Calculate center position relative to gameBoard
-        double borderWidth = 12.0;
+        double borderWidth = 8.0; // NES style border width
         double boardCenterX = gameBoard.getLayoutX() + borderWidth + boardPixelWidth / 2.0;
         double boardCenterY = gameBoard.getLayoutY() + borderWidth + boardPixelHeight / 2.0;
 
@@ -402,10 +402,21 @@ public class GuiController implements Initializable {
             for (int x = 0; x < brickWidth; x++) {
                 Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
                 rectangle.setFill(getFillColor(brick.getBrickData()[y][x]));
+                // Add rounded corners for NES-style blocks
+                rectangle.setArcHeight(2);
+                rectangle.setArcWidth(2);
                 rectangles[y][x] = rectangle;
                 // GridPane.add(node, column, row) = add(node, x, y)
                 brickPanel.add(rectangle, x, y);
             }
+        }
+        
+        // Ensure brickPanel is visible and on top (critical for seeing falling blocks)
+        if (brickPanel != null) {
+            brickPanel.setVisible(true);
+            brickPanel.setViewOrder(-1.0); // Negative view order = render on top of gameBoard
+            brickPanel.toFront(); // Force to front of z-order
+            brickPanel.setMouseTransparent(false); // Allow interaction
         }
 
         // Initialize ghost panel
@@ -420,6 +431,22 @@ public class GuiController implements Initializable {
         // Store ViewData for centering updates
         lastViewData = brick;
 
+        // Ensure brick panel and ghost panel are added to root and visible
+        if (gameBoard.getScene() != null) {
+            javafx.scene.Parent root = gameBoard.getScene().getRoot();
+            if (root instanceof javafx.scene.layout.Pane) {
+                javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
+                if (brickPanel != null && !rootPane.getChildren().contains(brickPanel)) {
+                    rootPane.getChildren().add(brickPanel);
+                    brickPanel.setVisible(true);
+                }
+                if (ghostPanel != null && !rootPane.getChildren().contains(ghostPanel)) {
+                    rootPane.getChildren().add(ghostPanel);
+                    ghostPanel.setVisible(true);
+                }
+            }
+        }
+
         // Set brick panel position relative to gamePanel
         updateBrickPanelPosition(brick);
 
@@ -432,6 +459,13 @@ public class GuiController implements Initializable {
                     centerBoardInWindow((Stage) window);
                     positionNextPanel();
                     positionScoreboard();
+                    // Ensure panels are visible after centering
+                    if (brickPanel != null) {
+                        brickPanel.setVisible(true);
+                    }
+                    if (ghostPanel != null) {
+                        ghostPanel.setVisible(true);
+                    }
                 }
             }
         });
@@ -458,7 +492,7 @@ public class GuiController implements Initializable {
         Scene scene = stage.getScene();
         if (scene == null) return;
 
-        // Add pause overlay and ghost panel to scene root if not already added
+        // Add pause overlay, ghost panel, and brick panel to scene root if not already added
         javafx.scene.Parent root = scene.getRoot();
         if (root instanceof javafx.scene.layout.Pane) {
             javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
@@ -467,8 +501,16 @@ public class GuiController implements Initializable {
                 rootPane.getChildren().add(pauseOverlay);
             }
             
+            // Ensure ghost panel is added and visible
             if (ghostPanel != null && !rootPane.getChildren().contains(ghostPanel)) {
                 rootPane.getChildren().add(ghostPanel);
+                ghostPanel.setVisible(true);
+            }
+            
+            // Ensure brick panel is added and visible (critical for seeing falling blocks)
+            if (brickPanel != null && !rootPane.getChildren().contains(brickPanel)) {
+                rootPane.getChildren().add(brickPanel);
+                brickPanel.setVisible(true);
             }
         }
 
@@ -556,8 +598,8 @@ public class GuiController implements Initializable {
         double sceneHeight = scene.getHeight();
 
         // Calculate center position for the BorderPane (gameBoard)
-        // Account for BorderPane's border width (12px from CSS)
-        double borderWidth = 12.0;
+        // Account for BorderPane's border width (8px from CSS - NES style)
+        double borderWidth = 8.0;
         double totalWidth = boardPixelWidth + (borderWidth * 2);
         double totalHeight = boardPixelHeight + (borderWidth * 2);
 
@@ -607,8 +649,8 @@ public class GuiController implements Initializable {
         double sceneHeight = scene.getHeight();
 
         // Calculate center position for the BorderPane (gameBoard)
-        // Account for BorderPane's border width (12px from CSS)
-        double borderWidth = 12.0;
+        // Account for BorderPane's border width (8px from CSS - NES style)
+        double borderWidth = 8.0;
         double totalWidth = boardPixelWidth + (borderWidth * 2);
         double totalHeight = boardPixelHeight + (borderWidth * 2);
 
@@ -758,11 +800,13 @@ public class GuiController implements Initializable {
      * @param brick the ViewData containing the brick's current position
      */
     private void updateBrickPanelPosition(ViewData brick) {
+        if (brickPanel == null || gameBoard == null) return;
+        
         // x = column, y = row
         // Position brickPanel relative to gameBoard's position
-        // Account for BorderPane's border width (12px from CSS)
+        // Account for BorderPane's border width (8px from CSS - NES style)
         // Account for GridPane gaps: each cell is BRICK_SIZE + CELL_GAP apart
-        double borderWidth = 12.0;
+        double borderWidth = 8.0;
         double cellWidth = BRICK_SIZE + CELL_GAP;
         double cellHeight = BRICK_SIZE + CELL_GAP;
         double layoutX = gameBoard.getLayoutX() + borderWidth +
@@ -771,6 +815,11 @@ public class GuiController implements Initializable {
                 brick.getyPosition() * cellHeight;
         brickPanel.setLayoutX(layoutX);
         brickPanel.setLayoutY(layoutY);
+        
+        // Ensure brickPanel is visible and on top (critical for seeing falling blocks)
+        brickPanel.setVisible(true);
+        brickPanel.setViewOrder(-1.0); // Negative view order = render on top
+        brickPanel.toFront(); // Force to front of z-order
     }
 
     /**
@@ -791,9 +840,9 @@ public class GuiController implements Initializable {
 
         // x = column, y = row (ghost Y position)
         // Position ghostPanel relative to gameBoard's position
-        // Account for BorderPane's border width (12px from CSS)
+        // Account for BorderPane's border width (8px from CSS - NES style)
         // Account for GridPane gaps: each cell is BRICK_SIZE + CELL_GAP apart
-        double borderWidth = 12.0;
+        double borderWidth = 8.0;
         double cellWidth = BRICK_SIZE + CELL_GAP;
         double cellHeight = BRICK_SIZE + CELL_GAP;
         double layoutX = gameBoard.getLayoutX() + borderWidth +
@@ -814,15 +863,30 @@ public class GuiController implements Initializable {
      * @param colorValue the color value (0-7) from the brick
      * @return a Color with opacity 0.3, or TRANSPARENT if colorValue is 0
      */
+    /**
+     * Gets the ghost color for a given color value with dimmed transparency.
+     * <p>
+     * Returns a semi-transparent, dimmed version of the brick color to create
+     * the ghost piece effect. Uses 0.25 opacity for a subtle NES-style ghost.
+     * </p>
+     *
+     * @param colorValue the color value (0-7) from the brick
+     * @return a Color with opacity 0.25 (dimmed), or TRANSPARENT if colorValue is 0
+     */
     private Paint getGhostColor(int colorValue) {
         if (colorValue == 0) {
             return Color.TRANSPARENT;
         }
 
-        // Get the base color and apply 0.3 opacity
+        // Get the base color and apply dimmed opacity (0.25 for subtle ghost effect)
         Color baseColor = (Color) getFillColor(colorValue);
-        return new Color(baseColor.getRed(), baseColor.getGreen(),
-                baseColor.getBlue(), 0.3);
+        // Dim the color slightly and reduce opacity for classic ghost piece look
+        return new Color(
+            Math.max(0, baseColor.getRed() * 0.7),      // Dim red channel
+            Math.max(0, baseColor.getGreen() * 0.7),    // Dim green channel
+            Math.max(0, baseColor.getBlue() * 0.7),     // Dim blue channel
+            0.25                                         // Low opacity for transparency
+        );
     }
 
     /**
@@ -835,6 +899,17 @@ public class GuiController implements Initializable {
      * @param i the color value (0-7)
      * @return the corresponding Paint object for rendering
      */
+    /**
+     * Maps a color value to a JavaFX Paint object using NES Tetris colors.
+     * <p>
+     * Color values correspond to brick types with classic NES Tetris colors:
+     * 0=transparent, 1=cyan (I-piece), 2=blue (J-piece), 3=orange (L-piece),
+     * 4=yellow (O-piece), 5=green (S-piece), 6=purple (T-piece), 7=red (Z-piece).
+     * </p>
+     *
+     * @param i the color value (0-7)
+     * @return the corresponding Paint object for rendering with NES-style colors
+     */
     private Paint getFillColor(int i) {
         Paint returnPaint;
         switch (i) {
@@ -842,25 +917,32 @@ public class GuiController implements Initializable {
                 returnPaint = Color.TRANSPARENT;
                 break;
             case 1:
-                returnPaint = Color.AQUA;
+                // CYAN - I-piece (classic NES cyan)
+                returnPaint = Color.CYAN;
                 break;
             case 2:
-                returnPaint = Color.BLUEVIOLET;
+                // BLUE - J-piece (classic NES blue)
+                returnPaint = Color.BLUE;
                 break;
             case 3:
-                returnPaint = Color.DARKGREEN;
+                // ORANGE - L-piece (classic NES orange)
+                returnPaint = Color.ORANGE;
                 break;
             case 4:
+                // YELLOW - O-piece (classic NES yellow)
                 returnPaint = Color.YELLOW;
                 break;
             case 5:
-                returnPaint = Color.RED;
+                // GREEN - S-piece (classic NES green)
+                returnPaint = Color.LIME;
                 break;
             case 6:
-                returnPaint = Color.BEIGE;
+                // PURPLE - T-piece (classic NES purple/magenta)
+                returnPaint = Color.MAGENTA;
                 break;
             case 7:
-                returnPaint = Color.BURLYWOOD;
+                // RED - Z-piece (classic NES red)
+                returnPaint = Color.RED;
                 break;
             default:
                 returnPaint = Color.WHITE;
@@ -973,8 +1055,8 @@ public class GuiController implements Initializable {
         if (nextPieceContainer == null || gameBoard == null) return;
 
         // Position next piece container (VBox with label and panel) to the right of the game board
-        // Account for BorderPane's border width (12px from CSS)
-        double borderWidth = 12.0;
+        // Account for BorderPane's border width (8px from CSS - NES style)
+        double borderWidth = 8.0;
         double spacing = 20.0; // Space between board and preview
         double nextPanelX = gameBoard.getLayoutX() + boardPixelWidth + (borderWidth * 2) + spacing;
         double nextPanelY = gameBoard.getLayoutY() + borderWidth;
@@ -995,8 +1077,8 @@ public class GuiController implements Initializable {
         if (scoreboardContainer == null || gameBoard == null) return;
 
         // Position scoreboard to the left of the game board
-        // Account for BorderPane's border width (12px from CSS)
-        double borderWidth = 12.0;
+        // Account for BorderPane's border width (8px from CSS - NES style)
+        double borderWidth = 8.0;
         double spacing = 20.0; // Space between board and scoreboard
         
         // Calculate X position: to the left of the game board
@@ -1079,6 +1161,13 @@ public class GuiController implements Initializable {
             // Store ViewData for fullscreen updates
             lastViewData = brick;
 
+            // Ensure brickPanel is visible and on top before updating
+            if (brickPanel != null) {
+                brickPanel.setVisible(true);
+                brickPanel.setViewOrder(-1.0); // Negative = render on top
+                brickPanel.toFront(); // Force to front of z-order
+            }
+
             // Update brick panel position using clean coordinate translation
             updateBrickPanelPosition(brick);
 
@@ -1102,11 +1191,35 @@ public class GuiController implements Initializable {
                 initializeGhostPanel(brick);
             }
             
+            // Ensure rectangles array is valid
+            if (rectangles == null || rectangles.length != brickHeight ||
+                    (rectangles.length > 0 && rectangles[0].length != brickWidth)) {
+                // Reinitialize rectangles if dimensions changed
+                rectangles = new Rectangle[brickHeight][brickWidth];
+                brickPanel.getChildren().clear();
+                for (int y = 0; y < brickHeight; y++) {
+                    for (int x = 0; x < brickWidth; x++) {
+                        Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
+                        rectangle.setArcHeight(2);
+                        rectangle.setArcWidth(2);
+                        rectangle.setVisible(true);
+                        // Set initial color from brick data
+                        int colorValue = brick.getBrickData()[y][x];
+                        rectangle.setFill(getFillColor(colorValue));
+                        rectangles[y][x] = rectangle;
+                        brickPanel.add(rectangle, x, y);
+                    }
+                }
+            }
+            
             // Loop: y (row) as outer, x (col) as inner
             for (int y = 0; y < brickHeight; y++) {
                 for (int x = 0; x < brickWidth; x++) {
-                    setRectangleData(brick.getBrickData()[y][x],
-                            rectangles[y][x]);
+                    if (rectangles != null && y < rectangles.length && 
+                        x < rectangles[y].length && rectangles[y][x] != null) {
+                        setRectangleData(brick.getBrickData()[y][x],
+                                rectangles[y][x]);
+                    }
                     // Update ghost rectangles with semi-transparent colors
                     if (ghostRectangles != null && y < ghostRectangles.length &&
                             x < ghostRectangles[y].length) {
@@ -1114,6 +1227,12 @@ public class GuiController implements Initializable {
                         ghostRectangles[y][x].setFill(ghostColor);
                     }
                 }
+            }
+            
+            // Final check: ensure brickPanel is on top and visible after all updates
+            if (brickPanel != null) {
+                brickPanel.setVisible(true);
+                brickPanel.toFront();
             }
         }
     }
@@ -1154,9 +1273,13 @@ public class GuiController implements Initializable {
      * @param rectangle the Rectangle to style
      */
     private void setRectangleData(int color, Rectangle rectangle) {
+        if (rectangle == null) return;
         rectangle.setFill(getFillColor(color));
-        rectangle.setArcHeight(9);
-        rectangle.setArcWidth(9);
+        // Use smaller arc for NES-style blocks
+        rectangle.setArcHeight(2);
+        rectangle.setArcWidth(2);
+        // Ensure rectangle is visible
+        rectangle.setVisible(true);
     }
 
     /**

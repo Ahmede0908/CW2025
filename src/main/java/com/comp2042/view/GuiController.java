@@ -1,5 +1,7 @@
 package com.comp2042.view;
 
+import com.comp2042.view.GameOverPanel;
+
 import com.comp2042.controller.EventSource;
 import com.comp2042.controller.EventType;
 import com.comp2042.controller.InputEventListener;
@@ -81,47 +83,26 @@ public class GuiController implements Initializable {
     /** Gap between cells in GridPane (matches vgap and hgap). */
     private static final int CELL_GAP = 1;
 
-    @FXML
-    private BorderPane gameBoard;
+    @FXML private BorderPane gameBoard;
+    @FXML private GridPane gamePanel;
+    @FXML private GridPane brickPanel;
+    @FXML private GridPane ghostPanel;
 
-    @FXML
-    private GridPane gamePanel;
+    @FXML private VBox nextPieceContainer;
+    @FXML private GridPane nextPanel;
 
-    @FXML
-    private Group groupNotification;
+    @FXML private VBox scoreboardContainer;
+    @FXML private Label currentLevelLabel;
+    @FXML private Label currentScoreLabel;
+    @FXML private Label totalLinesLabel;
+    @FXML private Label highScoreLabel;
 
-    @FXML
-    private GridPane brickPanel;
+    @FXML private Group groupNotification;
 
-    @FXML
+    @FXML private GameOverPanel gameOverPanelFXML;
+    
     private GameOverPanel gameOverPanel;
 
-    @FXML
-    private VBox nextPieceContainer;
-
-    @FXML
-    private Label nextPieceLabel;
-
-    @FXML
-    private GridPane nextPanel;
-
-    @FXML
-    private VBox scoreboardContainer;
-
-    @FXML
-    private Label currentLevelLabel;
-
-    @FXML
-    private Label currentScoreLabel;
-
-    @FXML
-    private Label totalLinesLabel;
-
-    @FXML
-    private Label highScoreLabel;
-
-    @FXML
-    private Button restartButton;
 
     private Rectangle[][] displayMatrix;
 
@@ -130,7 +111,6 @@ public class GuiController implements Initializable {
     private Rectangle[][] rectangles;
 
     // Ghost piece components
-    private GridPane ghostPanel;
     private Rectangle[][] ghostRectangles;
 
     // Next piece preview components
@@ -178,6 +158,16 @@ public class GuiController implements Initializable {
 
         // Initialize pause overlay
         initializePauseOverlay();
+
+        // Initialize game over panel - use FXML injected one if available, otherwise create new
+        if (gameOverPanelFXML != null) {
+            gameOverPanel = gameOverPanelFXML;
+        } else if (gameOverPanel == null) {
+            gameOverPanel = new GameOverPanel();
+            if (groupNotification != null) {
+                groupNotification.getChildren().add(gameOverPanel);
+            }
+        }
 
         gamePanel.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
@@ -239,7 +229,11 @@ public class GuiController implements Initializable {
                 }
             }
         });
-        gameOverPanel.setVisible(false);
+        
+        // Set game over panel invisible initially (with null check)
+        if (gameOverPanel != null) {
+            gameOverPanel.setVisible(false);
+        }
 
         final Reflection reflection = new Reflection();
         reflection.setFraction(0.8);
@@ -1285,7 +1279,9 @@ public class GuiController implements Initializable {
      */
     public void gameOver() {
         timeLine.stop();
-        gameOverPanel.setVisible(true);
+        if (gameOverPanel != null) {
+            gameOverPanel.setVisible(true);
+        }
         isGameOver.setValue(Boolean.TRUE);
 
         // Hide pause overlay if visible
@@ -1317,7 +1313,9 @@ public class GuiController implements Initializable {
     public void newGame(ActionEvent actionEvent) {
         timeLine.stop(); // stop old timeline
 
-        gameOverPanel.setVisible(false);
+        if (gameOverPanel != null) {
+            gameOverPanel.setVisible(false);
+        }
         eventListener.createNewGame();
         gamePanel.requestFocus();
 
@@ -1422,7 +1420,9 @@ public class GuiController implements Initializable {
 
         // Reset game over state and hide game over panel
         isGameOver.setValue(Boolean.FALSE);
-        gameOverPanel.setVisible(false);
+        if (gameOverPanel != null) {
+            gameOverPanel.setVisible(false);
+        }
 
         // Clear ghost panel
         if (ghostPanel != null) {
@@ -1476,4 +1476,40 @@ public class GuiController implements Initializable {
             }
         });
     }
+
+    @FXML
+    private void returnToMainMenu() {
+        if (sceneManager != null) {
+            timeLine.stop();  // stop falling pieces
+            sceneManager.showMenu();
+        }
+    }
+
+    @FXML
+    private void openSettings() {
+        if (sceneManager != null) {
+            timeLine.stop();
+            sceneManager.showSettings();
+        }
+    }
+
+    @FXML
+    public void goToMainMenu() {
+        if (sceneManager != null) {
+            SceneManager.showMenu();
+        } else {
+            // Fallback: use static method
+            SceneManager.showMenu();
+        }
+    }
+
+    @FXML
+    public void goToSettings() {
+        sceneManager.showSettings();
+    }
+
+
+
+
+
 }

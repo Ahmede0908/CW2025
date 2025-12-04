@@ -4,14 +4,15 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.Button?>
 
-<VBox xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml/1"
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.comp2042.view.SettingsController"
-      alignment="CENTER" spacing="30"
+      alignment="CENTER"
+      spacing="20"
       style="-fx-background-color: #111;">
 
-    <Text text="Settings" style="-fx-font-size: 30px; -fx-fill: white;"/>
+    <Text text="Settings" style="-fx-font-size: 32px; -fx-fill: white;"/>
 
-    <Button fx:id="btnBack" text="Back to Menu" prefWidth="180"/>
+    <Button fx:id="btnBack" text="Back to Menu" prefWidth="200"/>
 
 </VBox>

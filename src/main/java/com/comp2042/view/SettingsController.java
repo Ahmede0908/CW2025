@@ -6,14 +6,9 @@ import javafx.scene.control.Button;
 public class SettingsController {
 
     @FXML private Button btnBack;
-    private SceneManager sceneManager;
-
-    public void setSceneManager(SceneManager sceneManager) {
-        this.sceneManager = sceneManager;
-    }
 
     @FXML
     private void initialize() {
-        btnBack.setOnAction(e -> sceneManager.showMenu());
+        btnBack.setOnAction(e -> SceneManager.showMenu());
     }
 }

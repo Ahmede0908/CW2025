@@ -9,16 +9,10 @@ public class MenuController {
     @FXML private Button btnSettings;
     @FXML private Button btnExit;
 
-    private SceneManager sceneManager;
-
-    public void setSceneManager(SceneManager sceneManager) {
-        this.sceneManager = sceneManager;
-    }
-
     @FXML
-    private void initialize() {
-        btnStart.setOnAction(e -> sceneManager.showGame());
-        btnSettings.setOnAction(e -> sceneManager.showSettings());
-        btnExit.setOnAction(e -> sceneManager.exitGame());
+    public void initialize() {
+        btnStart.setOnAction(e -> SceneManager.showGame());
+        btnSettings.setOnAction(e -> SceneManager.showSettings());
+        btnExit.setOnAction(e -> SceneManager.exitGame());
     }
 }

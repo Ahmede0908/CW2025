@@ -143,6 +143,8 @@ public class GuiController implements Initializable {
     // Pause overlay components
     private Group pauseOverlay;
     private Text pauseText;
+    private Text resumeText;
+    private javafx.scene.layout.Pane dimOverlay;
 
     /**
      * Initializes the JavaFX controller after FXML loading.
@@ -344,22 +346,47 @@ public class GuiController implements Initializable {
     /**
      * Initializes the pause overlay components.
      * <p>
-     * Creates a Group containing a "PAUSED" text label that will be displayed
-     * when the game is paused. The overlay is initially hidden.
+     * Creates a Group containing "PAUSED" text and "Press P to resume" instructions
+     * with a semi-transparent background. The overlay is initially hidden.
      * </p>
      */
     private void initializePauseOverlay() {
+        // Create full-screen dim overlay that will cover entire scene
+        dimOverlay = new javafx.scene.layout.Pane();
+        dimOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.75);");
+        
+        // Create "PAUSED" text with bright, visible styling
         pauseText = new Text("PAUSED");
-        pauseText.setFont(Font.font("Arial", FontWeight.BOLD, 48));
-        pauseText.setFill(Color.WHITE);
-        pauseText.setStroke(Color.BLACK);
-        pauseText.setStrokeWidth(2);
-
-        pauseOverlay = new Group(pauseText);
+        pauseText.setFont(Font.loadFont(getClass().getClassLoader().getResource("digital.ttf").toExternalForm(), 64));
+        pauseText.setFill(Color.web("#00ffff"));
+        pauseText.setStroke(Color.web("#ffffff"));
+        pauseText.setStrokeWidth(4);
+        pauseText.getStyleClass().add("pause-text");
+        pauseText.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        
+        // Create "Press P to resume" text - brighter and more visible
+        resumeText = new Text("PRESS P TO RESUME");
+        resumeText.setFont(Font.loadFont(getClass().getClassLoader().getResource("digital.ttf").toExternalForm(), 26));
+        resumeText.setFill(Color.web("#ffffff"));
+        resumeText.setStroke(Color.web("#00ffff"));
+        resumeText.setStrokeWidth(3);
+        resumeText.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        
+        // Create VBox container for vertical layout with spacing
+        VBox pauseContainer = new VBox(30);
+        pauseContainer.setAlignment(javafx.geometry.Pos.CENTER);
+        pauseContainer.getChildren().addAll(pauseText, resumeText);
+        pauseContainer.setStyle("-fx-padding: 20px 40px;");
+        pauseContainer.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        pauseContainer.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        
+        // Create StackPane to layer dim overlay behind text
+        javafx.scene.layout.StackPane stackPane = new javafx.scene.layout.StackPane();
+        stackPane.getChildren().addAll(dimOverlay, pauseContainer);
+        
+        pauseOverlay = new Group(stackPane);
         pauseOverlay.setVisible(false);
         pauseOverlay.setMouseTransparent(true); // Allow clicks to pass through
-
-        // Add pause overlay to the scene root (will be added in initGameView)
     }
 
     /**
@@ -396,9 +423,13 @@ public class GuiController implements Initializable {
      * Shows the pause overlay and centers it over the board.
      */
     private void showPauseOverlay() {
-        if (pauseOverlay == null || gameBoard == null) return;
+        if (pauseOverlay == null) return;
 
         pauseOverlay.setVisible(true);
+        
+        // Bring to front to ensure it's above everything
+        pauseOverlay.toFront();
+        
         centerPauseOverlay();
     }
 
@@ -411,32 +442,47 @@ public class GuiController implements Initializable {
     }
 
     /**
-     * Centers the pause overlay over the game board.
+     * Positions the pause overlay to cover the entire screen with dim overlay.
      * <p>
-     * Calculates the center position based on the gameBoard's position and size,
-     * accounting for the BorderPane border width.
+     * Makes the dim overlay cover the entire scene and centers the text in the middle.
      * </p>
      */
     private void centerPauseOverlay() {
-        if (pauseOverlay == null || pauseText == null || gameBoard == null) return;
+        if (pauseOverlay == null || dimOverlay == null) return;
+        
+        // Get scene reference
+        if (gameBoard == null || gameBoard.getScene() == null) {
+            return;
+        }
+        
+        final javafx.scene.Scene scene = gameBoard.getScene();
 
-        // Get pause text bounds
-        pauseText.applyCss();
-        // Text nodes don't need explicit layout() - bounds are calculated automatically
-        double textWidth = pauseText.getLayoutBounds().getWidth();
-        double textHeight = pauseText.getLayoutBounds().getHeight();
-
-        // Calculate center position relative to gameBoard
-        double borderWidth = 8.0; // NES style border width
-        double boardCenterX = gameBoard.getLayoutX() + borderWidth + boardPixelWidth / 2.0;
-        double boardCenterY = gameBoard.getLayoutY() + borderWidth + boardPixelHeight / 2.0;
-
-        // Center the text over the board
-        double pauseX = boardCenterX - textWidth / 2.0;
-        double pauseY = boardCenterY - textHeight / 2.0;
-
-        pauseOverlay.setLayoutX(pauseX);
-        pauseOverlay.setLayoutY(pauseY);
+        // Use Platform.runLater to ensure layout is complete
+        javafx.application.Platform.runLater(() -> {
+            double sceneWidth = scene.getWidth();
+            double sceneHeight = scene.getHeight();
+            
+            // If scene dimensions are not ready, try again
+            if (sceneWidth <= 0 || sceneHeight <= 0) {
+                javafx.application.Platform.runLater(() -> centerPauseOverlay());
+                return;
+            }
+            
+            // Set dim overlay to cover entire scene
+            dimOverlay.setPrefWidth(sceneWidth);
+            dimOverlay.setPrefHeight(sceneHeight);
+            dimOverlay.setLayoutX(0);
+            dimOverlay.setLayoutY(0);
+            
+            // Position the overlay group at (0, 0) to cover the scene
+            pauseOverlay.setLayoutX(0);
+            pauseOverlay.setLayoutY(0);
+            
+            // Ensure overlay is on top by bringing it to front
+            if (pauseOverlay.getParent() != null) {
+                pauseOverlay.toFront();
+            }
+        });
     }
 
     /**
@@ -626,6 +672,8 @@ public class GuiController implements Initializable {
             
             if (pauseOverlay != null && !rootPane.getChildren().contains(pauseOverlay)) {
                 rootPane.getChildren().add(pauseOverlay);
+                // Ensure pause overlay is always on top
+                pauseOverlay.toFront();
             }
             
             // Ensure ghost panel is added and visible

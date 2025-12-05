@@ -216,10 +216,12 @@
    ============================================ */
 .pause-text {
     -fx-font-family: "digital";
-    -fx-font-size: 48px;
+    -fx-font-size: 64px;
     -fx-font-weight: bold;
     -fx-text-fill: #00ffff;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 255, 255, 1.0), 10, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 255, 255, 1.0), 15, 0, 0, 0),
+                dropshadow(three-pass-box, rgba(0, 255, 255, 0.8), 25, 0, 0, 0),
+                dropshadow(three-pass-box, rgba(255, 255, 255, 0.6), 5, 0, 0, 0);
 }
 
 /* ============================================

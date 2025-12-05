@@ -182,5 +182,57 @@ class ViewDataTest {
         assertEquals(8, nextCopy.length);
         assertEquals(3, nextCopy[4][4]);
     }
+
+    @Test
+    @DisplayName("getNextPiecesData() returns deep copy of all next pieces")
+    void testGetNextPiecesData_ReturnsDeepCopy() {
+        // Arrange
+        int[][] brick = {{1, 1}};
+        int[][] firstNext = {{2, 2}};
+        int[][] secondNext = {{3, 3, 3}};
+        List<int[][]> originalNextPieces = new ArrayList<>();
+        originalNextPieces.add(firstNext);
+        originalNextPieces.add(secondNext);
+        
+        ViewData viewData = new ViewData(brick, 0, 0, 0, originalNextPieces, 0, 0, 0, 1);
+
+        // Act
+        List<int[][]> copy1 = viewData.getNextPiecesData();
+        List<int[][]> copy2 = viewData.getNextPiecesData();
+
+        // Assert
+        assertNotSame(originalNextPieces, copy1,
+                "Returned list should be a different object");
+        assertNotSame(copy1, copy2,
+                "Each call should return a new copy");
+        assertEquals(2, copy1.size(),
+                "Should contain 2 next pieces");
+        assertArrayEquals(firstNext, copy1.get(0),
+                "First piece should match");
+        assertArrayEquals(secondNext, copy1.get(1),
+                "Second piece should match");
+
+        // Modify copy and verify original is unchanged
+        copy1.get(0)[0][0] = 99;
+        List<int[][]> copy3 = viewData.getNextPiecesData();
+        assertEquals(2, copy3.get(0)[0][0],
+                "Modifying copy should not affect subsequent calls");
+    }
+
+    @Test
+    @DisplayName("getNextPiecesData() returns empty list when no next pieces")
+    void testGetNextPiecesData_EmptyList() {
+        // Arrange
+        int[][] brick = {{1, 1}};
+        List<int[][]> emptyNextPieces = new ArrayList<>();
+        ViewData viewData = new ViewData(brick, 0, 0, 0, emptyNextPieces, 0, 0, 0, 1);
+
+        // Act
+        List<int[][]> result = viewData.getNextPiecesData();
+
+        // Assert
+        assertNotNull(result, "Result should not be null");
+        assertTrue(result.isEmpty(), "Result should be empty when no next pieces provided");
+    }
 }
 

@@ -1496,6 +1496,45 @@ public class GuiController implements Initializable {
     }
 
     /**
+     * Animates a line clear effect by flashing the specified rows white for ~150ms.
+     * <p>
+     * This method temporarily paints all rectangles in the cleared rows white.
+     * The white flash will be visible until refreshGameBackground() is called
+     * to update the board display. The animation runs immediately and does not
+     * block the calling thread.
+     * </p>
+     * <p>
+     * Coordinate system: row indices correspond to the y-coordinate in the board matrix.
+     * displayMatrix is indexed as displayMatrix[row][col] = displayMatrix[y][x].
+     * </p>
+     *
+     * @param clearedRows the list of row indices (0-based) that will be cleared
+     */
+    public void animateLineClear(java.util.List<Integer> clearedRows) {
+        if (clearedRows == null || clearedRows.isEmpty() || displayMatrix == null) {
+            return;
+        }
+
+        // Flash cleared rows white immediately
+        int width = displayMatrix[0].length;
+        for (Integer rowIndex : clearedRows) {
+            if (rowIndex >= 0 && rowIndex < displayMatrix.length) {
+                for (int x = 0; x < width; x++) {
+                    javafx.scene.shape.Rectangle rect = displayMatrix[rowIndex][x];
+                    if (rect != null && rect.getFill() != null) {
+                        // Only flash non-empty cells (cells with color value > 0)
+                        // Check if the cell has a non-transparent fill
+                        javafx.scene.paint.Paint fill = rect.getFill();
+                        if (!fill.equals(javafx.scene.paint.Color.TRANSPARENT)) {
+                            rect.setFill(javafx.scene.paint.Color.WHITE);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Sets the visual properties of a Rectangle based on its color value.
      * <p>
      * Applies the fill color and rounded corner styling to the rectangle.

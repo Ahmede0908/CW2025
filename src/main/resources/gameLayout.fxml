@@ -54,6 +54,9 @@
         <Label text="HIGH SCORE" styleClass="score-label"/>
         <Label fx:id="highScoreLabel" text="0" styleClass="score-value-high"/>
         
+        <Button fx:id="pauseButton" text="PAUSE" 
+                onAction="#handlePauseButton"
+                styleClass="retro-button"/>
         <Button fx:id="restartButton" text="RESTART" 
                 onAction="#restartGame"
                 styleClass="retro-button-start"/>

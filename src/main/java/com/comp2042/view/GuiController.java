@@ -97,6 +97,9 @@ public class GuiController implements Initializable {
     @FXML private Label currentScoreLabel;
     @FXML private Label totalLinesLabel;
     @FXML private Label highScoreLabel;
+    @FXML private Button pauseButton;
+    @FXML private Button restartButton;
+    @FXML private Button btnMainMenu;
     
     @FXML private VBox controlsContainer;
 
@@ -362,7 +365,7 @@ public class GuiController implements Initializable {
     private void initializePauseOverlay() {
         // Create full-screen dim overlay that will cover entire scene
         dimOverlay = new javafx.scene.layout.Pane();
-        dimOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.75);");
+        dimOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.85);"); // More opaque to better hide blocks
         
         // Create "PAUSED" text with bright, visible styling
         pauseText = new Text("PAUSED");
@@ -392,10 +395,12 @@ public class GuiController implements Initializable {
         // Create StackPane to layer dim overlay behind text
         javafx.scene.layout.StackPane stackPane = new javafx.scene.layout.StackPane();
         stackPane.getChildren().addAll(dimOverlay, pauseContainer);
+        // StackPane will size to fit its parent, but we'll set explicit size in centerPauseOverlay
         
         pauseOverlay = new Group(stackPane);
         pauseOverlay.setVisible(false);
         pauseOverlay.setMouseTransparent(true); // Allow clicks to pass through
+        pauseOverlay.setViewOrder(-1000.0); // Ensure it's always on top (lower viewOrder = on top)
     }
 
     /**
@@ -419,12 +424,20 @@ public class GuiController implements Initializable {
                 timeLine.pause();
             }
             showPauseOverlay();
+            // Update button text
+            if (pauseButton != null) {
+                pauseButton.setText("RESUME");
+            }
         } else {
             // Unpause: resume timeline and hide overlay
             if (timeLine != null) {
                 timeLine.play();
             }
             hidePauseOverlay();
+            // Update button text
+            if (pauseButton != null) {
+                pauseButton.setText("PAUSE");
+            }
         }
     }
 
@@ -434,7 +447,25 @@ public class GuiController implements Initializable {
     private void showPauseOverlay() {
         if (pauseOverlay == null) return;
 
+        // Ensure pause overlay is added to root pane if not already
+        if (gameBoard != null && gameBoard.getScene() != null) {
+            javafx.scene.Parent root = gameBoard.getScene().getRoot();
+            if (root instanceof javafx.scene.layout.Pane) {
+                javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
+                if (!rootPane.getChildren().contains(pauseOverlay)) {
+                    rootPane.getChildren().add(pauseOverlay);
+                } else {
+                    // Remove and re-add to ensure it's at the end (on top)
+                    rootPane.getChildren().remove(pauseOverlay);
+                    rootPane.getChildren().add(pauseOverlay);
+                }
+            }
+        }
+
         pauseOverlay.setVisible(true);
+        
+        // Set viewOrder to ensure it's always on top (lower values = on top)
+        pauseOverlay.setViewOrder(-1000.0);
         
         // Bring to front to ensure it's above everything
         pauseOverlay.toFront();
@@ -477,19 +508,48 @@ public class GuiController implements Initializable {
                 return;
             }
             
-            // Set dim overlay to cover entire scene
+            // Set dim overlay to cover entire scene with max constraints
             dimOverlay.setPrefWidth(sceneWidth);
             dimOverlay.setPrefHeight(sceneHeight);
+            dimOverlay.setMaxWidth(Double.MAX_VALUE);
+            dimOverlay.setMaxHeight(Double.MAX_VALUE);
+            dimOverlay.setMinWidth(sceneWidth);
+            dimOverlay.setMinHeight(sceneHeight);
             dimOverlay.setLayoutX(0);
             dimOverlay.setLayoutY(0);
+            
+            // Size the StackPane inside the Group to match scene dimensions
+            if (pauseOverlay.getChildren().size() > 0 && 
+                pauseOverlay.getChildren().get(0) instanceof javafx.scene.layout.StackPane) {
+                javafx.scene.layout.StackPane stackPane = 
+                    (javafx.scene.layout.StackPane) pauseOverlay.getChildren().get(0);
+                stackPane.setPrefWidth(sceneWidth);
+                stackPane.setPrefHeight(sceneHeight);
+                stackPane.setMaxWidth(Double.MAX_VALUE);
+                stackPane.setMaxHeight(Double.MAX_VALUE);
+                stackPane.setMinWidth(sceneWidth);
+                stackPane.setMinHeight(sceneHeight);
+            }
             
             // Position the overlay group at (0, 0) to cover the scene
             pauseOverlay.setLayoutX(0);
             pauseOverlay.setLayoutY(0);
             
-            // Ensure overlay is on top by bringing it to front
+            // Ensure overlay is on top by bringing it to front multiple times
+            // (sometimes JavaFX needs multiple calls to properly layer)
             if (pauseOverlay.getParent() != null) {
+                javafx.scene.layout.Pane parent = (javafx.scene.layout.Pane) pauseOverlay.getParent();
+                // Move to end of children list (last = on top)
+                parent.getChildren().remove(pauseOverlay);
+                parent.getChildren().add(pauseOverlay);
+                // Set viewOrder to ensure it's always on top (lower values = on top)
+                pauseOverlay.setViewOrder(-1000.0);
                 pauseOverlay.toFront();
+                // Force another toFront after a brief delay to ensure it stays on top
+                javafx.application.Platform.runLater(() -> {
+                    pauseOverlay.setViewOrder(-1000.0);
+                    pauseOverlay.toFront();
+                });
             }
         });
     }
@@ -566,6 +626,11 @@ public class GuiController implements Initializable {
             brickPanel.setViewOrder(-1.0); // Negative view order = render on top of gameBoard
             brickPanel.toFront(); // Force to front of z-order
             brickPanel.setMouseTransparent(false); // Allow interaction
+            // Ensure pause overlay stays on top if visible
+            if (pauseOverlay != null && pauseOverlay.isVisible()) {
+                pauseOverlay.setViewOrder(-1000.0);
+                pauseOverlay.toFront();
+            }
         }
 
         // Initialize ghost panel
@@ -1010,6 +1075,11 @@ public class GuiController implements Initializable {
         brickPanel.setVisible(true);
         brickPanel.setViewOrder(-1.0); // Negative view order = render on top
         brickPanel.toFront(); // Force to front of z-order
+        // Ensure pause overlay stays on top if visible
+        if (pauseOverlay != null && pauseOverlay.isVisible()) {
+            pauseOverlay.setViewOrder(-1000.0);
+            pauseOverlay.toFront();
+        }
     }
 
     /**
@@ -1575,6 +1645,11 @@ public class GuiController implements Initializable {
             if (brickPanel != null) {
                 brickPanel.setVisible(true);
                 brickPanel.toFront();
+                // Ensure pause overlay stays on top if visible
+                if (pauseOverlay != null && pauseOverlay.isVisible()) {
+                    pauseOverlay.setViewOrder(-1000.0);
+                    pauseOverlay.toFront();
+                }
             }
         }
     }
@@ -1929,6 +2004,32 @@ public class GuiController implements Initializable {
      * @param actionEvent the action event that triggered this method (can be
      *                    null, e.g., when called from keyboard shortcut)
      */
+    public void handlePauseButton(ActionEvent actionEvent) {
+        togglePause();
+    }
+
+    /**
+     * Handles the restart button action event.
+     * <p>
+     * This method is called when the user clicks the restart button in the UI.
+     * It stops the game timeline, resets the game state, and creates a new game.
+     * This method performs the following actions:
+     * <ul>
+     *   <li>Stopping the game timeline</li>
+     *   <li>Resetting pause and game over states</li>
+     *   <li>Hiding the game over panel and pause overlay</li>
+     *   <li>Resetting the board through the event listener</li>
+     *   <li>Reinitializing the view with the reset board state</li>
+     *   <li>Resetting the timeline to default speed (400ms)</li>
+     *   <li>Clearing and reinitializing the ghost piece</li>
+     *   <li>Centering all UI elements</li>
+     * </ul>
+     * This method works both during a running game and after game over.
+     * </p>
+     *
+     * @param actionEvent the action event that triggered this method (can be
+     *                    null, e.g., when called from keyboard shortcut)
+     */
     public void restartGame(ActionEvent actionEvent) {
         // Stop the timeline
         if (timeLine != null) {
@@ -1938,6 +2039,10 @@ public class GuiController implements Initializable {
         // Reset pause state
         isPause.setValue(Boolean.FALSE);
         hidePauseOverlay();
+        // Reset pause button text
+        if (pauseButton != null) {
+            pauseButton.setText("PAUSE");
+        }
 
         // Reset game over state and hide game over panel
         isGameOver.setValue(Boolean.FALSE);

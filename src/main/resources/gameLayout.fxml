@@ -63,9 +63,9 @@
     </VBox>
 
     <!-- Controls Panel -->
-    <VBox fx:id="controlsContainer" alignment="CENTER" spacing="8" styleClass="controls-box">
+    <VBox fx:id="controlsContainer" alignment="CENTER" spacing="4" styleClass="controls-box">
         <Label text="CONTROLS" styleClass="controls-title"/>
-        <VBox alignment="CENTER_LEFT" spacing="5" style="-fx-padding: 10px;">
+        <VBox alignment="CENTER_LEFT" spacing="2" style="-fx-padding: 5px;">
             <Label text="← → / A D   Move" styleClass="control-item"/>
             <Label text="↑ / W       Rotate" styleClass="control-item"/>
             <Label text="↓ / S       Soft Drop" styleClass="control-item"/>

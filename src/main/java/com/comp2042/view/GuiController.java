@@ -184,6 +184,11 @@ public class GuiController implements Initializable {
             }
         }
         
+        // Ensure controls panel is visible
+        if (controlsContainer != null) {
+            controlsContainer.setVisible(true);
+        }
+        
         // Prevent buttons from stealing focus or exiting fullscreen
         // Will be set up after FXML injection completes
         javafx.application.Platform.runLater(() -> {
@@ -1366,36 +1371,76 @@ public class GuiController implements Initializable {
     private void positionControlsPanel() {
         if (controlsContainer == null || nextPieceContainer == null) return;
 
-        // Position controls panel below the next piece panel
-        double spacing = 15.0; // Space between next piece panel and controls
+        // Ensure controls panel is visible
+        controlsContainer.setVisible(true);
         
-        // Get next piece container position and dimensions
-        double nextPanelX = nextPieceContainer.getLayoutX();
-        double nextPanelY = nextPieceContainer.getLayoutY();
-        double nextPanelWidth = nextPieceContainer.getBoundsInLocal().getWidth();
-        double nextPanelHeight = nextPieceContainer.getBoundsInLocal().getHeight();
-        
-        if (nextPanelHeight <= 0) {
-            // Fallback: estimate height if bounds not available yet
-            nextPanelHeight = 150.0; // Approximate height of next piece panel
-        }
-        if (nextPanelWidth <= 0) {
-            // Fallback: estimate width if bounds not available yet
-            nextPanelWidth = 150.0; // Approximate width of next piece panel
-        }
-        
-        // Align horizontally with next piece panel (same X position)
-        double controlsX = nextPanelX;
-        
-        // Position vertically below next piece panel
-        double controlsY = nextPanelY + nextPanelHeight + spacing;
-        
-        // Match the width of the next piece panel for better alignment
-        controlsContainer.setPrefWidth(nextPanelWidth);
-        controlsContainer.setMaxWidth(nextPanelWidth);
+        // Use Platform.runLater to ensure layout is complete
+        javafx.application.Platform.runLater(() -> {
+            // Force layout pass to get accurate bounds
+            nextPieceContainer.applyCss();
+            controlsContainer.applyCss();
+            nextPieceContainer.layout();
+            controlsContainer.layout();
+            
+            // Position controls panel below the next piece panel
+            double spacing = 15.0; // Space between next piece panel and controls
+            
+            // Get next piece container position and dimensions
+            double nextPanelX = nextPieceContainer.getLayoutX();
+            double nextPanelY = nextPieceContainer.getLayoutY();
+            double nextPanelWidth = nextPieceContainer.getBoundsInLocal().getWidth();
+            double nextPanelHeight = nextPieceContainer.getBoundsInLocal().getHeight();
+            
+            if (nextPanelHeight <= 0) {
+                // Fallback: estimate height if bounds not available yet
+                // Account for two preview panels now
+                nextPanelHeight = 350.0; // Approximate height with two preview panels
+            }
+            if (nextPanelWidth <= 0) {
+                // Fallback: estimate width if bounds not available yet
+                nextPanelWidth = 150.0; // Approximate width of next piece panel
+            }
+            
+            // Align horizontally with next piece panel (same X position)
+            double controlsX = nextPanelX;
+            
+            // Position vertically below next piece panel
+            double controlsY = nextPanelY + nextPanelHeight + spacing;
+            
+            // Check if controls panel would go off-screen and adjust if needed
+            if (gameBoard != null && gameBoard.getScene() != null) {
+                Scene scene = gameBoard.getScene();
+                double sceneHeight = scene.getHeight();
+                
+                // Get actual controls height after layout
+                controlsContainer.layout();
+                double controlsHeight = controlsContainer.getBoundsInLocal().getHeight();
+                
+                if (controlsHeight <= 0) {
+                    // Estimate controls height based on content (reduced for compact design)
+                    controlsHeight = 160.0; // Approximate height with all control items
+                }
+                
+                // If controls panel would go off-screen, position it above the bottom
+                if (controlsY + controlsHeight > sceneHeight - 20) {
+                    // Position it so it fits within the scene with some margin
+                    controlsY = Math.max(nextPanelY + nextPanelHeight + spacing, 
+                                        sceneHeight - controlsHeight - 20);
+                }
+            }
+            
+            // Match the width of the next piece panel for better alignment
+            controlsContainer.setPrefWidth(nextPanelWidth);
+            controlsContainer.setMaxWidth(nextPanelWidth);
+            controlsContainer.setMinWidth(nextPanelWidth);
 
-        controlsContainer.setLayoutX(controlsX);
-        controlsContainer.setLayoutY(controlsY);
+            controlsContainer.setLayoutX(controlsX);
+            controlsContainer.setLayoutY(controlsY);
+            
+            // Ensure it's on top and visible
+            controlsContainer.toFront();
+            controlsContainer.setVisible(true);
+        });
     }
 
     /**

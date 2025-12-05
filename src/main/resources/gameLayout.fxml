@@ -51,6 +51,20 @@
                 styleClass="retro-button"/>
     </VBox>
 
+    <!-- Controls Panel -->
+    <VBox fx:id="controlsContainer" alignment="CENTER" spacing="8" styleClass="controls-box">
+        <Label text="CONTROLS" styleClass="controls-title"/>
+        <VBox alignment="CENTER_LEFT" spacing="5" style="-fx-padding: 10px;">
+            <Label text="← → / A D   Move" styleClass="control-item"/>
+            <Label text="↑ / W       Rotate" styleClass="control-item"/>
+            <Label text="↓ / S       Soft Drop" styleClass="control-item"/>
+            <Label text="SPACE       Hard Drop" styleClass="control-item"/>
+            <Label text="P           Pause" styleClass="control-item"/>
+            <Label text="R           Restart" styleClass="control-item"/>
+            <Label text="F11         Fullscreen" styleClass="control-item"/>
+        </VBox>
+    </VBox>
+
     <!-- Notification and Game Over Group -->
     <Group fx:id="groupNotification">
         <VBox alignment="CENTER">

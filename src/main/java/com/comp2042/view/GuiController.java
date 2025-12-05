@@ -96,6 +96,8 @@ public class GuiController implements Initializable {
     @FXML private Label currentScoreLabel;
     @FXML private Label totalLinesLabel;
     @FXML private Label highScoreLabel;
+    
+    @FXML private VBox controlsContainer;
 
     @FXML private Group groupNotification;
 
@@ -804,6 +806,9 @@ public class GuiController implements Initializable {
         
         // Update scoreboard position
         positionScoreboard();
+        
+        // Update controls position
+        positionControlsPanel();
     }
 
     /**
@@ -855,6 +860,9 @@ public class GuiController implements Initializable {
         
         // Update scoreboard position
         positionScoreboard();
+        
+        // Update controls position
+        positionControlsPanel();
     }
 
     /**
@@ -1281,6 +1289,48 @@ public class GuiController implements Initializable {
 
         scoreboardContainer.setLayoutX(scoreboardX);
         scoreboardContainer.setLayoutY(scoreboardY);
+    }
+
+    /**
+     * Positions the controls panel below the next piece panel.
+     * <p>
+     * Calculates the position based on the next piece container's location and places
+     * the controls panel directly below it with appropriate spacing.
+     * </p>
+     */
+    private void positionControlsPanel() {
+        if (controlsContainer == null || nextPieceContainer == null) return;
+
+        // Position controls panel below the next piece panel
+        double spacing = 15.0; // Space between next piece panel and controls
+        
+        // Get next piece container position and dimensions
+        double nextPanelX = nextPieceContainer.getLayoutX();
+        double nextPanelY = nextPieceContainer.getLayoutY();
+        double nextPanelWidth = nextPieceContainer.getBoundsInLocal().getWidth();
+        double nextPanelHeight = nextPieceContainer.getBoundsInLocal().getHeight();
+        
+        if (nextPanelHeight <= 0) {
+            // Fallback: estimate height if bounds not available yet
+            nextPanelHeight = 150.0; // Approximate height of next piece panel
+        }
+        if (nextPanelWidth <= 0) {
+            // Fallback: estimate width if bounds not available yet
+            nextPanelWidth = 150.0; // Approximate width of next piece panel
+        }
+        
+        // Align horizontally with next piece panel (same X position)
+        double controlsX = nextPanelX;
+        
+        // Position vertically below next piece panel
+        double controlsY = nextPanelY + nextPanelHeight + spacing;
+        
+        // Match the width of the next piece panel for better alignment
+        controlsContainer.setPrefWidth(nextPanelWidth);
+        controlsContainer.setMaxWidth(nextPanelWidth);
+
+        controlsContainer.setLayoutX(controlsX);
+        controlsContainer.setLayoutY(controlsY);
     }
 
     /**

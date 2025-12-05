@@ -257,3 +257,32 @@
     -fx-font-size: 38px;
     -fx-text-fill: #ffff00;
 }
+
+/* ============================================
+   CONTROLS PANEL
+   ============================================ */
+.controls-box {
+    -fx-background-color: #1a1a1a;
+    -fx-border-color: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+    -fx-border-width: 4px;
+    -fx-border-radius: 8px;
+    -fx-padding: 15px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 8, 0, 0, 0);
+}
+
+.controls-title {
+    -fx-font-family: "digital";
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00ffff;
+    -fx-padding: 0px 0px 8px 0px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 255, 255, 0.6), 3, 0, 0, 0);
+}
+
+.control-item {
+    -fx-font-family: "digital";
+    -fx-font-size: 12px;
+    -fx-text-fill: #ffffff;
+    -fx-padding: 2px 0px;
+}

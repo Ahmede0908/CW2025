@@ -122,6 +122,14 @@ public class GuiController implements Initializable {
     
     // Reference to Score object for level-based speed calculation
     private com.comp2042.model.Score scoreReference;
+    
+    // Global settings reference
+    private GlobalSettings globalSettings;
+    
+    // Settings flags
+    private boolean ghostPieceEnabled = true;
+    private boolean hardDropEnabled = true;
+    private long difficultyBaseSpeed = 400; // Default NORMAL speed
 
     private final BooleanProperty isGameOver = new SimpleBooleanProperty();
 
@@ -154,7 +162,8 @@ public class GuiController implements Initializable {
         Font.loadFont(getClass().getClassLoader().getResource("digital.ttf")
                 .toExternalForm(), 38);
         gamePanel.setFocusTraversable(true);
-        gamePanel.requestFocus();
+        // Use Platform.runLater to prevent focus issues that might exit fullscreen
+        javafx.application.Platform.runLater(() -> gamePanel.requestFocus());
 
         // Initialize pause overlay
         initializePauseOverlay();
@@ -168,10 +177,25 @@ public class GuiController implements Initializable {
                 groupNotification.getChildren().add(gameOverPanel);
             }
         }
+        
+        // Prevent buttons from stealing focus or exiting fullscreen
+        // Will be set up after FXML injection completes
+        javafx.application.Platform.runLater(() -> {
+            setupButtonFocusHandling();
+        });
 
         gamePanel.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
+                // F11 key toggles fullscreen (only way to exit fullscreen)
+                if (keyEvent.getCode() == KeyCode.F11) {
+                    if (sceneManager != null) {
+                        sceneManager.toggleFullscreen();
+                    }
+                    keyEvent.consume();
+                    return;
+                }
+                
                 // P key toggles pause/unpause (works even when paused or game over)
                 if (keyEvent.getCode() == KeyCode.P) {
                     togglePause();
@@ -190,7 +214,8 @@ public class GuiController implements Initializable {
                 if (keyEvent.getCode() == KeyCode.SPACE) {
                     if (isPause.getValue() == Boolean.FALSE &&
                             isGameOver.getValue() == Boolean.FALSE &&
-                            eventListener != null) {
+                            eventListener != null &&
+                            hardDropEnabled) { // Check if hard drop is enabled
                         handleHardDrop();
                         keyEvent.consume();
                         return;
@@ -245,6 +270,75 @@ public class GuiController implements Initializable {
 
     public void setSceneManager(SceneManager sceneManager) {
         this.sceneManager = sceneManager;
+    }
+    
+    /**
+     * Sets up button focus handling to prevent buttons from exiting fullscreen.
+     */
+    private void setupButtonFocusHandling() {
+        // Find all buttons in the scene and disable focus traversal
+        if (gameBoard != null && gameBoard.getScene() != null) {
+            javafx.scene.Parent root = gameBoard.getScene().getRoot();
+            if (root != null) {
+                setupButtonFocusRecursive(root);
+            }
+        }
+    }
+    
+    /**
+     * Recursively sets focusTraversable(false) on all buttons to prevent focus issues.
+     */
+    private void setupButtonFocusRecursive(javafx.scene.Node node) {
+        if (node instanceof javafx.scene.control.Button) {
+            javafx.scene.control.Button button = (javafx.scene.control.Button) node;
+            button.setFocusTraversable(false);
+        }
+        if (node instanceof javafx.scene.Parent) {
+            javafx.scene.Parent parent = (javafx.scene.Parent) node;
+            for (javafx.scene.Node child : parent.getChildrenUnmodifiable()) {
+                setupButtonFocusRecursive(child);
+            }
+        }
+    }
+
+    /**
+     * Applies global settings to the game controller.
+     * <p>
+     * This method is called by SceneManager before creating a new GameController
+     * to ensure all settings are applied correctly. It updates:
+     * - Ghost piece visibility
+     * - Hard drop functionality
+     * - Game difficulty (fall speed)
+     * </p>
+     *
+     * @param settings the GlobalSettings instance containing current settings
+     */
+    public void applySettings(GlobalSettings settings) {
+        if (settings == null) return;
+        
+        this.globalSettings = settings;
+        
+        // Update ghost piece setting
+        ghostPieceEnabled = settings.isGhostPieceEnabled();
+        
+        // Update hard drop setting
+        hardDropEnabled = settings.isHardDropEnabled();
+        
+        // Update difficulty base speed
+        difficultyBaseSpeed = settings.getFallSpeedMillis();
+        
+        // Update ghost panel visibility immediately
+        if (ghostPanel != null) {
+            ghostPanel.setVisible(ghostPieceEnabled);
+        }
+        
+        // Update game speed if timeline exists
+        if (timeLine != null && scoreReference != null) {
+            updateGameSpeed();
+        } else if (timeLine == null && scoreReference != null) {
+            // Timeline not created yet, but score reference exists - will be set when timeline is created
+            // The initial timeline creation should use difficultyBaseSpeed
+        }
     }
 
     /**
@@ -442,7 +536,7 @@ public class GuiController implements Initializable {
                 }
                 if (ghostPanel != null && !rootPane.getChildren().contains(ghostPanel)) {
                     rootPane.getChildren().add(ghostPanel);
-                    ghostPanel.setVisible(true);
+                    ghostPanel.setVisible(ghostPieceEnabled);
                 }
             }
         }
@@ -464,14 +558,16 @@ public class GuiController implements Initializable {
                         brickPanel.setVisible(true);
                     }
                     if (ghostPanel != null) {
-                        ghostPanel.setVisible(true);
+                        ghostPanel.setVisible(ghostPieceEnabled);
                     }
                 }
             }
         });
 
+        // Use difficulty base speed if available, otherwise default to 400ms
+        long initialSpeed = (difficultyBaseSpeed > 0) ? difficultyBaseSpeed : 400;
         timeLine = new Timeline(new KeyFrame(
-                Duration.millis(400),
+                Duration.millis(initialSpeed),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
         ));
         timeLine.setCycleCount(Timeline.INDEFINITE);
@@ -488,6 +584,37 @@ public class GuiController implements Initializable {
      *
      * @param stage the JavaFX Stage to monitor for fullscreen and size changes
      */
+    /**
+     * Forces re-centering of the game board.
+     * Useful when fullscreen state changes or scene is resized.
+     *
+     * @param stage the Stage to center for
+     */
+    public void forceRecenter(Stage stage) {
+        if (stage == null || stage.getScene() == null) return;
+        
+        Scene scene = stage.getScene();
+        
+        // Ensure scene dimensions are valid before centering
+        if (scene.getWidth() <= 0 || scene.getHeight() <= 0) {
+            // Wait for dimensions to be set
+            javafx.application.Platform.runLater(() -> {
+                forceRecenter(stage);
+            });
+            return;
+        }
+        
+        // Ensure scene dimensions are updated
+        scene.getRoot().applyCss();
+        scene.getRoot().layout();
+        
+        if (stage.isFullScreen()) {
+            centerBoardForFullscreen(stage);
+        } else {
+            centerBoardInWindow(stage);
+        }
+    }
+
     public void setupFullscreenCentering(Stage stage) {
         Scene scene = stage.getScene();
         if (scene == null) return;
@@ -504,7 +631,7 @@ public class GuiController implements Initializable {
             // Ensure ghost panel is added and visible
             if (ghostPanel != null && !rootPane.getChildren().contains(ghostPanel)) {
                 rootPane.getChildren().add(ghostPanel);
-                ghostPanel.setVisible(true);
+                ghostPanel.setVisible(ghostPieceEnabled);
             }
             
             // Ensure brick panel is added and visible (critical for seeing falling blocks)
@@ -742,7 +869,7 @@ public class GuiController implements Initializable {
             ghostPanel.setHgap(1);
             ghostPanel.setVgap(1);
             ghostPanel.setMouseTransparent(true); // Allow clicks to pass through
-            ghostPanel.setVisible(true); // Visible by default
+            ghostPanel.setVisible(ghostPieceEnabled); // Visible based on settings
             ghostPanel.setViewOrder(1.0); // Render behind active brick (lower view order = behind)
 
             // Add ghost panel to scene root
@@ -756,8 +883,8 @@ public class GuiController implements Initializable {
                 }
             }
         } else {
-            // Ensure ghost panel is visible when reinitializing
-            ghostPanel.setVisible(true);
+            // Ensure ghost panel visibility matches settings when reinitializing
+            ghostPanel.setVisible(ghostPieceEnabled);
         }
 
         // Clear old ghost rectangles
@@ -837,6 +964,12 @@ public class GuiController implements Initializable {
      */
     private void updateGhostPanelPosition(ViewData brick) {
         if (ghostPanel == null || gameBoard == null) return;
+        
+        // Don't update ghost panel if ghost piece is disabled
+        if (!ghostPieceEnabled) {
+            ghostPanel.setVisible(false);
+            return;
+        }
 
         // x = column, y = row (ghost Y position)
         // Position ghostPanel relative to gameBoard's position
@@ -851,6 +984,7 @@ public class GuiController implements Initializable {
                 brick.getGhostYPosition() * cellHeight;
         ghostPanel.setLayoutX(layoutX);
         ghostPanel.setLayoutY(layoutY);
+        ghostPanel.setVisible(true);
     }
 
     /**
@@ -1304,7 +1438,7 @@ public class GuiController implements Initializable {
             }
             refreshBrick(downData.getViewData());
         }
-        gamePanel.requestFocus();
+        javafx.application.Platform.runLater(() -> gamePanel.requestFocus());
     }
 
     /**
@@ -1372,8 +1506,13 @@ public class GuiController implements Initializable {
     private void updateGameSpeed() {
         if (timeLine == null || scoreReference == null) return;
         
-        // Get current speed based on level
-        long newSpeedMillis = scoreReference.getGameSpeedMillis();
+        // Get base speed from difficulty setting (EASY=550, NORMAL=400, HARD=250)
+        long baseSpeed = difficultyBaseSpeed;
+        
+        // Apply level progression: decrease by 50ms per level, minimum 50ms
+        // Formula: baseSpeed - (level - 1) * 50, with minimum of 50ms
+        int level = scoreReference.getCurrentLevel();
+        long newSpeedMillis = Math.max(50, baseSpeed - (level - 1) * 50);
         
         // Stop the timeline
         boolean wasPlaying = timeLine.getStatus() == javafx.animation.Animation.Status.RUNNING;
@@ -1439,11 +1578,23 @@ public class GuiController implements Initializable {
         if (gameOverPanel != null) {
             gameOverPanel.setVisible(false);
         }
+        
+        // Reload settings to get current difficulty
+        if (globalSettings != null) {
+            difficultyBaseSpeed = globalSettings.getFallSpeedMillis();
+        } else if (sceneManager != null) {
+            globalSettings = sceneManager.getSettings();
+            if (globalSettings != null) {
+                difficultyBaseSpeed = globalSettings.getFallSpeedMillis();
+            }
+        }
+        
         eventListener.createNewGame();
-        gamePanel.requestFocus();
+        javafx.application.Platform.runLater(() -> gamePanel.requestFocus());
 
-        // 🟢 recreate Timeline for new game
-        timeLine = new Timeline(new KeyFrame(Duration.millis(400),
+        // 🟢 recreate Timeline for new game with current difficulty setting
+        long newGameSpeed = (difficultyBaseSpeed > 0) ? difficultyBaseSpeed : 400;
+        timeLine = new Timeline(new KeyFrame(Duration.millis(newGameSpeed),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))));
         timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
@@ -1506,7 +1657,7 @@ public class GuiController implements Initializable {
             refreshBrick(result.getViewData());
         }
         
-        gamePanel.requestFocus();
+        javafx.application.Platform.runLater(() -> gamePanel.requestFocus());
     }
 
 
@@ -1569,21 +1720,32 @@ public class GuiController implements Initializable {
             refreshBrick(resetViewData);
         }
 
-        // Reinitialize the timeline with level-appropriate speed
+        // Reload settings to ensure difficulty is current
+        if (globalSettings != null) {
+            difficultyBaseSpeed = globalSettings.getFallSpeedMillis();
+        } else if (sceneManager != null) {
+            globalSettings = sceneManager.getSettings();
+            if (globalSettings != null) {
+                difficultyBaseSpeed = globalSettings.getFallSpeedMillis();
+            }
+        }
+        
+        // Reinitialize the timeline with difficulty and level-appropriate speed
         if (scoreReference != null) {
             updateGameSpeed();
         } else {
-            // Fallback to default speed if score reference not available
+            // Fallback to difficulty base speed if score reference not available
+            long fallbackSpeed = (difficultyBaseSpeed > 0) ? difficultyBaseSpeed : 400;
             timeLine = new Timeline(new KeyFrame(
-                    Duration.millis(400),
+                    Duration.millis(fallbackSpeed),
                     ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
             ));
             timeLine.setCycleCount(Timeline.INDEFINITE);
             timeLine.play();
         }
 
-        // Request focus for keyboard input
-        gamePanel.requestFocus();
+        // Request focus for keyboard input - use Platform.runLater to prevent fullscreen exit
+        javafx.application.Platform.runLater(() -> gamePanel.requestFocus());
 
         // Center everything
         Platform.runLater(() -> {
@@ -1602,33 +1764,38 @@ public class GuiController implements Initializable {
 
     @FXML
     private void returnToMainMenu() {
-        if (sceneManager != null) {
+        if (timeLine != null) {
             timeLine.stop();  // stop falling pieces
-            sceneManager.showMenu();
         }
+        // Preserve fullscreen - SceneManager will handle it
+        SceneManager.showMenu();
     }
 
     @FXML
     private void openSettings() {
-        if (sceneManager != null) {
+        if (timeLine != null) {
             timeLine.stop();
-            sceneManager.showSettings();
         }
+        // Preserve fullscreen - SceneManager will handle it
+        SceneManager.showSettings();
     }
 
     @FXML
     public void goToMainMenu() {
-        if (sceneManager != null) {
-            SceneManager.showMenu();
-        } else {
-            // Fallback: use static method
-            SceneManager.showMenu();
+        if (timeLine != null) {
+            timeLine.stop();
         }
+        // Preserve fullscreen - SceneManager will handle it
+        SceneManager.showMenu();
     }
 
     @FXML
     public void goToSettings() {
-        sceneManager.showSettings();
+        if (timeLine != null) {
+            timeLine.stop();
+        }
+        // Preserve fullscreen - SceneManager will handle it
+        SceneManager.showSettings();
     }
 
 

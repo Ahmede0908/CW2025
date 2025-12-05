@@ -4,32 +4,61 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import java.net.URL?>
 
 <Pane xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.comp2042.view.SettingsController"
-      prefWidth="750" prefHeight="600">
+      minWidth="750" minHeight="600">
     
     <!-- Centered Settings Container with Teal Frame -->
-    <VBox alignment="CENTER" spacing="30" styleClass="menu-frame"
-          layoutX="125" layoutY="100"
-          prefWidth="500" prefHeight="400">
+    <VBox fx:id="settingsContainer" alignment="CENTER" spacing="25" styleClass="menu-frame"
+          prefWidth="550" prefHeight="500">
         <Text text="SETTINGS" styleClass="menu-title"/>
         
         <VBox alignment="CENTER" spacing="20" style="-fx-padding: 20px 0px;">
-            <Label text="Game Settings" 
-                   styleClass="menu-subtitle"
-                   style="-fx-padding: 10px 0px;"/>
             
-            <!-- Placeholder for future settings -->
-            <Label text="Settings options coming soon..." 
-                   style="-fx-text-fill: #888888; -fx-font-size: 14px;"/>
+            <!-- Ghost Piece Toggle -->
+            <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-padding: 10px;">
+                <Label text="Ghost Piece:" 
+                       style="-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold; -fx-min-width: 150px;"/>
+                <CheckBox fx:id="ghostToggle" 
+                          text="Show ghost piece preview"
+                          style="-fx-text-fill: #ffffff; -fx-font-size: 14px;"/>
+            </HBox>
+            
+            <!-- Hard Drop Toggle -->
+            <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-padding: 10px;">
+                <Label text="Hard Drop:" 
+                       style="-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold; -fx-min-width: 150px;"/>
+                <CheckBox fx:id="hardDropToggle" 
+                          text="Enable hard drop (SPACE)"
+                          style="-fx-text-fill: #ffffff; -fx-font-size: 14px;"/>
+            </HBox>
+            
+            <!-- Difficulty Dropdown -->
+            <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-padding: 10px;">
+                <Label text="Difficulty:" 
+                       style="-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold; -fx-min-width: 150px;"/>
+                <ComboBox fx:id="difficultyDropdown" 
+                          prefWidth="200"
+                          promptText="Select Difficulty"/>
+            </HBox>
         </VBox>
         
-        <Button fx:id="btnBack" text="BACK TO MENU" 
-                prefWidth="250" prefHeight="50"
-                styleClass="retro-button"/>
+        <!-- Action Buttons -->
+        <HBox alignment="CENTER" spacing="15" style="-fx-padding: 20px 0px;">
+            <Button fx:id="btnSave" text="SAVE &amp; APPLY" 
+                    prefWidth="180" prefHeight="50"
+                    styleClass="retro-button-start"
+                    onAction="#applySettings"/>
+            <Button fx:id="btnBack" text="BACK TO MENU" 
+                    prefWidth="180" prefHeight="50"
+                    styleClass="retro-button"
+                    onAction="#goBackToMenu"/>
+        </HBox>
     </VBox>
     
     <stylesheets>

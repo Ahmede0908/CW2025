@@ -5,20 +5,8 @@
 /* Global Background - Grid Pattern */
 .root {
     -fx-background-color: #0a0a0a;
-    -fx-background-image: repeating-linear-gradient(
-        0deg,
-        #1a1a1a 0px,
-        #1a1a1a 20px,
-        #0f0f0f 20px,
-        #0f0f0f 40px
-    ),
-    repeating-linear-gradient(
-        90deg,
-        #1a1a1a 0px,
-        #1a1a1a 20px,
-        #0f0f0f 20px,
-        #0f0f0f 40px
-    );
+    /* Note: JavaFX CSS doesn't support repeating-linear-gradient.
+       Using solid color with subtle effect instead. */
 }
 
 /* ============================================

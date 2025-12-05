@@ -8,11 +8,10 @@
 <Pane xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.comp2042.view.MenuController"
-      prefWidth="750" prefHeight="600">
+      minWidth="750" minHeight="600">
     
     <!-- Centered Menu Container with Teal Frame -->
-    <VBox alignment="CENTER" spacing="30" styleClass="menu-frame"
-          layoutX="125" layoutY="100"
+    <VBox fx:id="menuContainer" alignment="CENTER" spacing="30" styleClass="menu-frame"
           prefWidth="500" prefHeight="400">
         <Text text="TETRIS FX" styleClass="menu-title"/>
         <Text text="CLASSIC EDITION" styleClass="menu-subtitle"/>

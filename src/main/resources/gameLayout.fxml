@@ -26,7 +26,18 @@
     <!-- Next Piece Preview Panel -->
     <VBox fx:id="nextPieceContainer" alignment="CENTER" spacing="8" styleClass="next-box">
         <Label fx:id="nextPieceLabel" text="NEXT" styleClass="next-label"/>
-        <GridPane fx:id="nextPanel" hgap="1" vgap="1" styleClass="next-panel" alignment="CENTER"/>
+        
+        <!-- First Next Piece Preview -->
+        <VBox alignment="CENTER" spacing="4">
+            <Label text="1" styleClass="next-label" style="-fx-font-size: 12px;"/>
+            <GridPane fx:id="nextPanel1" hgap="1" vgap="1" styleClass="next-panel" alignment="CENTER"/>
+        </VBox>
+        
+        <!-- Second Next Piece Preview -->
+        <VBox alignment="CENTER" spacing="4">
+            <Label text="2" styleClass="next-label" style="-fx-font-size: 12px;"/>
+            <GridPane fx:id="nextPanel2" hgap="1" vgap="1" styleClass="next-panel" alignment="CENTER"/>
+        </VBox>
     </VBox>
 
     <!-- Scoreboard Panel -->

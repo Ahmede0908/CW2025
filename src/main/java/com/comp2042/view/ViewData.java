@@ -2,6 +2,9 @@ package com.comp2042.view;
 
 import com.comp2042.logic.MatrixOperations;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Immutable data transfer object containing view information for rendering
  * the game state.
@@ -30,7 +33,7 @@ public final class ViewData {
     private final int xPosition;
     private final int yPosition;
     private final int ghostYPosition;
-    private final int[][] nextBrickData;
+    private final List<int[][]> nextPiecesData;
     private final int score;
     private final int totalLines;
     private final int highScore;
@@ -39,27 +42,33 @@ public final class ViewData {
     /**
      * Constructs a new ViewData object with the specified brick and score information.
      *
-     * @param brickData      the current falling brick shape matrix
-     *                       (brickData[row][col])
-     * @param xPosition      the column position of the brick (x coordinate)
-     * @param yPosition      the row position of the brick (y coordinate)
-     * @param ghostYPosition the row position where the brick would land
-     *                       (ghost piece Y coordinate)
-     * @param nextBrickData  the next brick preview shape matrix
-     *                       (nextBrickData[row][col])
-     * @param score          the current game score
-     * @param totalLines     the total number of lines cleared
-     * @param highScore      the high score (persists across games)
-     * @param level          the current level (calculated from lines cleared)
+     * @param brickData       the current falling brick shape matrix
+     *                        (brickData[row][col])
+     * @param xPosition       the column position of the brick (x coordinate)
+     * @param yPosition       the row position of the brick (y coordinate)
+     * @param ghostYPosition  the row position where the brick would land
+     *                        (ghost piece Y coordinate)
+     * @param nextPiecesData  list of next brick preview shape matrices
+     *                        (each matrix is indexed as nextPiecesData[i][row][col])
+     * @param score           the current game score
+     * @param totalLines      the total number of lines cleared
+     * @param highScore       the high score (persists across games)
+     * @param level           the current level (calculated from lines cleared)
      */
     public ViewData(int[][] brickData, int xPosition, int yPosition,
-                    int ghostYPosition, int[][] nextBrickData,
+                    int ghostYPosition, List<int[][]> nextPiecesData,
                     int score, int totalLines, int highScore, int level) {
         this.brickData = brickData;
         this.xPosition = xPosition;
         this.yPosition = yPosition;
         this.ghostYPosition = ghostYPosition;
-        this.nextBrickData = nextBrickData;
+        // Create defensive copy of the list and its contents
+        this.nextPiecesData = new ArrayList<>();
+        if (nextPiecesData != null) {
+            for (int[][] piece : nextPiecesData) {
+                this.nextPiecesData.add(MatrixOperations.copy(piece));
+            }
+        }
         this.score = score;
         this.totalLines = totalLines;
         this.highScore = highScore;
@@ -113,16 +122,38 @@ public final class ViewData {
     }
 
     /**
-     * Returns a defensive copy of the next brick preview shape matrix.
+     * Returns a defensive copy of the next brick preview shape matrices.
      * <p>
-     * The matrix is indexed as nextBrickData[row][col]. Non-zero values
-     * represent filled cells in the next brick.
+     * Returns a list containing shape matrices for the next pieces.
+     * Each matrix is indexed as nextPiecesData[i][row][col]. Non-zero values
+     * represent filled cells in the next bricks.
      * </p>
      *
-     * @return a deep copy of the next brick shape matrix
+     * @return a list of deep copies of the next brick shape matrices
+     */
+    public List<int[][]> getNextPiecesData() {
+        List<int[][]> result = new ArrayList<>();
+        if (nextPiecesData != null) {
+            for (int[][] piece : nextPiecesData) {
+                result.add(MatrixOperations.copy(piece));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a defensive copy of the first next brick preview shape matrix.
+     * <p>
+     * Maintains backward compatibility with code expecting a single next brick.
+     * </p>
+     *
+     * @return a deep copy of the first next brick shape matrix, or null if none
      */
     public int[][] getNextBrickData() {
-        return MatrixOperations.copy(nextBrickData);
+        if (nextPiecesData == null || nextPiecesData.isEmpty()) {
+            return null;
+        }
+        return MatrixOperations.copy(nextPiecesData.get(0));
     }
 
     /**

@@ -263,13 +263,41 @@ public class SimpleBoard implements Board {
      * @return ViewData object containing brick shape, position, ghost position,
      *         next brick information, and score data
      */
+    /**
+     * Returns the preview data for the next N pieces.
+     * <p>
+     * Gets the shape matrices for the upcoming pieces without removing them
+     * from the generator queue. Each brick's shape matrix at rotation 0 is returned.
+     * </p>
+     *
+     * @return a list of shape matrices (int[][]) for the next pieces
+     */
+    public java.util.List<int[][]> getNextPreviewData() {
+        java.util.List<int[][]> previewData = new java.util.ArrayList<>();
+        
+        // Check if brickGenerator is a RandomBrickGenerator to access getNextBricks()
+        if (brickGenerator instanceof com.comp2042.model.RandomBrickGenerator rbg) {
+            java.util.List<com.comp2042.model.Brick> nextBricks = rbg.getNextBricks(2);
+            for (com.comp2042.model.Brick brick : nextBricks) {
+                // Get the first rotation (index 0) of each brick
+                previewData.add(brick.getShapeMatrix().get(0));
+            }
+        } else {
+            // Fallback: use getNextBrick() for single brick
+            previewData.add(brickGenerator.getNextBrick().getShapeMatrix().get(0));
+        }
+        
+        return previewData;
+    }
+
     @Override
     public ViewData getViewData() {
         int ghostY = calculateGhostYPosition();
+        java.util.List<int[][]> nextPiecesData = getNextPreviewData();
         return new ViewData(brickRotator.getCurrentShape(),
                 (int) currentOffset.getX(), (int) currentOffset.getY(),
                 ghostY,
-                brickGenerator.getNextBrick().getShapeMatrix().get(0),
+                nextPiecesData,
                 score.getCurrentScore(),
                 score.getTotalLines(),
                 score.getHighScore(),

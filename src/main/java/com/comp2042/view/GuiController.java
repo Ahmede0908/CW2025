@@ -89,7 +89,8 @@ public class GuiController implements Initializable {
     @FXML private GridPane ghostPanel;
 
     @FXML private VBox nextPieceContainer;
-    @FXML private GridPane nextPanel;
+    @FXML private GridPane nextPanel1;
+    @FXML private GridPane nextPanel2;
 
     @FXML private VBox scoreboardContainer;
     @FXML private Label currentLevelLabel;
@@ -116,7 +117,8 @@ public class GuiController implements Initializable {
     private Rectangle[][] ghostRectangles;
 
     // Next piece preview components
-    private Rectangle[][] nextPieceMatrix;
+    private Rectangle[][] nextPieceMatrix1;
+    private Rectangle[][] nextPieceMatrix2;
 
     private Timeline timeLine;
 
@@ -565,7 +567,7 @@ public class GuiController implements Initializable {
         initializeGhostPanel(brick);
 
         // Initialize next piece preview
-        initNextPiecePreview(brick.getNextBrickData());
+        initNextPiecePreview(brick.getNextPiecesData());
 
         // Initialize scoreboard
         refreshScore(brick);
@@ -1142,95 +1144,158 @@ public class GuiController implements Initializable {
     }
 
     /**
-     * Initializes the next piece preview panel.
+     * Initializes a single next piece preview panel.
      * <p>
-     * Creates a GridPane with rectangles for displaying the next falling piece.
-     * The preview shows the exact shape that will spawn next, centered within
-     * the preview panel. The panel is sized to accommodate the largest possible
-     * brick shape (6x6 grid for better visibility).
+     * Creates a GridPane with rectangles for displaying a next falling piece.
+     * The preview shows the exact shape, centered within the preview panel.
+     * The panel is sized to accommodate the largest possible brick shape (6x6 grid).
      * </p>
      *
-     * @param nextBrick the 2D integer array representing the next brick shape
-     *                  (nextBrick[row][col])
+     * @param nextBrick the 2D integer array representing the brick shape
+     * @param panel the GridPane to initialize
+     * @param matrix the Rectangle matrix array reference to populate (will be allocated)
      */
-    private void initNextPiecePreview(int[][] nextBrick) {
-        if (nextPanel == null) return;
+    private void initSingleNextPiecePreview(int[][] nextBrick, GridPane panel, Rectangle[][] matrix) {
+        if (panel == null || nextBrick == null) return;
 
         // Clear old rectangles
-        nextPanel.getChildren().clear();
+        panel.getChildren().clear();
 
-        // Get dimensions of the next brick
+        // Get dimensions of the brick
         int brickHeight = nextBrick.length;
         int brickWidth = nextBrick[0].length;
 
-        // Initialize next piece matrix
-        nextPieceMatrix = new Rectangle[brickHeight][brickWidth];
+        // Ensure matrix is properly allocated
+        // Note: matrix parameter is a reference to the field, we just populate it
 
-        // Set fixed size for the preview panel to prevent distortion
-        // Use a 6x6 grid to make the box bigger and accommodate all brick shapes
+        // Set fixed size for the preview panel
         int maxSize = 6;
         double cellSize = BRICK_SIZE + CELL_GAP;
         double panelWidth = maxSize * cellSize;
         double panelHeight = maxSize * cellSize;
-        nextPanel.setPrefSize(panelWidth, panelHeight);
-        nextPanel.setMinSize(panelWidth, panelHeight);
-        nextPanel.setMaxSize(panelWidth, panelHeight);
+        panel.setPrefSize(panelWidth, panelHeight);
+        panel.setMinSize(panelWidth, panelHeight);
+        panel.setMaxSize(panelWidth, panelHeight);
 
-        // Calculate centering offsets to center the brick in the preview panel
+        // Calculate centering offsets
         int offsetX = (maxSize - brickWidth) / 2;
         int offsetY = (maxSize - brickHeight) / 2;
 
-        // Create rectangles for the next brick
-        // Loop: y (row) as outer, x (col) as inner
+        // Create rectangles for the brick
         for (int y = 0; y < brickHeight; y++) {
             for (int x = 0; x < brickWidth; x++) {
                 Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
                 rectangle.setFill(getFillColor(nextBrick[y][x]));
                 rectangle.setArcHeight(9);
                 rectangle.setArcWidth(9);
-                nextPieceMatrix[y][x] = rectangle;
-                // Add to GridPane with centering offset
-                // GridPane.add(node, column, row) = add(node, x + offsetX, y + offsetY)
-                nextPanel.add(rectangle, x + offsetX, y + offsetY);
+                matrix[y][x] = rectangle;
+                panel.add(rectangle, x + offsetX, y + offsetY);
+            }
+        }
+    }
+
+    /**
+     * Initializes the next piece preview panels for multiple pieces.
+     *
+     * @param nextPieces list of 2D integer arrays representing the next brick shapes
+     */
+    private void initNextPiecePreview(java.util.List<int[][]> nextPieces) {
+        if (nextPieces == null || nextPieces.isEmpty()) return;
+
+        // Initialize first panel
+        if (nextPieces.size() >= 1 && nextPanel1 != null) {
+            int[][] firstBrick = nextPieces.get(0);
+            if (firstBrick != null && firstBrick.length > 0 && firstBrick[0].length > 0) {
+                int brickHeight1 = firstBrick.length;
+                int brickWidth1 = firstBrick[0].length;
+                nextPieceMatrix1 = new Rectangle[brickHeight1][brickWidth1];
+                initSingleNextPiecePreview(firstBrick, nextPanel1, nextPieceMatrix1);
             }
         }
 
-        // Position the next panel beside the game board
+        // Initialize second panel
+        if (nextPieces.size() >= 2 && nextPanel2 != null) {
+            int[][] secondBrick = nextPieces.get(1);
+            if (secondBrick != null && secondBrick.length > 0 && secondBrick[0].length > 0) {
+                int brickHeight2 = secondBrick.length;
+                int brickWidth2 = secondBrick[0].length;
+                nextPieceMatrix2 = new Rectangle[brickHeight2][brickWidth2];
+                initSingleNextPiecePreview(secondBrick, nextPanel2, nextPieceMatrix2);
+            }
+        }
+
+        // Position the next panel container beside the game board
         positionNextPanel();
     }
 
     /**
-     * Refreshes the next piece preview with a new brick shape.
-     * <p>
-     * Updates the visual representation of the next piece preview panel.
-     * Reinitializes the preview if the brick dimensions have changed.
-     * </p>
+     * Refreshes a single next piece preview panel.
      *
-     * @param nextBrick the 2D integer array representing the next brick shape
-     *                  (nextBrick[row][col])
+     * @param nextBrick the 2D integer array representing the brick shape
+     * @param panel the GridPane to refresh
+     * @param isFirstPanel true if this is the first panel, false if second
      */
-    private void refreshNextPiece(int[][] nextBrick) {
-        if (nextPanel == null) return;
+    private void refreshSingleNextPiece(int[][] nextBrick, GridPane panel, boolean isFirstPanel) {
+        if (panel == null || nextBrick == null) return;
 
         int brickHeight = nextBrick.length;
         int brickWidth = nextBrick[0].length;
 
+        Rectangle[][] matrixRef = isFirstPanel ? nextPieceMatrix1 : nextPieceMatrix2;
+
         // Reinitialize if dimensions changed
-        if (nextPieceMatrix == null || nextPieceMatrix.length != brickHeight ||
-                (nextPieceMatrix.length > 0 && nextPieceMatrix[0].length != brickWidth)) {
-            initNextPiecePreview(nextBrick);
+        if (matrixRef == null || matrixRef.length != brickHeight ||
+                (matrixRef.length > 0 && (matrixRef[0] == null || matrixRef[0].length != brickWidth))) {
+            // Reallocate matrix - update the field reference
+            if (isFirstPanel) {
+                nextPieceMatrix1 = new Rectangle[brickHeight][brickWidth];
+                initSingleNextPiecePreview(nextBrick, panel, nextPieceMatrix1);
+            } else {
+                nextPieceMatrix2 = new Rectangle[brickHeight][brickWidth];
+                initSingleNextPiecePreview(nextBrick, panel, nextPieceMatrix2);
+            }
             return;
         }
 
         // Update existing rectangles
-        // Loop: y (row) as outer, x (col) as inner
         for (int y = 0; y < brickHeight; y++) {
             for (int x = 0; x < brickWidth; x++) {
-                if (nextPieceMatrix[y][x] != null) {
-                    setRectangleData(nextBrick[y][x], nextPieceMatrix[y][x]);
+                if (matrixRef[y][x] != null) {
+                    setRectangleData(nextBrick[y][x], matrixRef[y][x]);
                 }
             }
         }
+    }
+
+    /**
+     * Refreshes the next piece preview panels with new brick shapes.
+     * <p>
+     * Updates the visual representation of both preview panels.
+     * </p>
+     *
+     * @param nextPieces list of 2D integer arrays representing the next brick shapes
+     */
+    private void refreshNextPiece(java.util.List<int[][]> nextPieces) {
+        if (nextPieces == null || nextPieces.isEmpty()) return;
+
+        // Refresh first panel
+        if (nextPieces.size() >= 1 && nextPanel1 != null) {
+            refreshSingleNextPiece(nextPieces.get(0), nextPanel1, true);
+        }
+
+        // Refresh second panel
+        if (nextPieces.size() >= 2 && nextPanel2 != null) {
+            refreshSingleNextPiece(nextPieces.get(1), nextPanel2, false);
+        }
+    }
+
+    /**
+     * Backward compatibility method - initializes preview with single brick.
+     */
+    private void initNextPiecePreview(int[][] nextBrick) {
+        java.util.List<int[][]> list = new java.util.ArrayList<>();
+        list.add(nextBrick);
+        initNextPiecePreview(list);
     }
 
     /**
@@ -1407,7 +1472,7 @@ public class GuiController implements Initializable {
             updateGhostPanelPosition(brick);
 
             // Update next piece preview
-            refreshNextPiece(brick.getNextBrickData());
+            refreshNextPiece(brick.getNextPiecesData());
 
             // Update scoreboard
             refreshScore(brick);

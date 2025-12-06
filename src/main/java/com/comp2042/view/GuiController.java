@@ -29,6 +29,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -87,6 +88,9 @@ public class GuiController implements Initializable {
     @FXML private GridPane gamePanel;
     @FXML private GridPane brickPanel;
     @FXML private GridPane ghostPanel;
+    
+    // Grid overlay for visual grid lines
+    private Group gridOverlay;
 
     @FXML private VBox nextPieceContainer;
     @FXML private GridPane nextPanel1;
@@ -599,6 +603,9 @@ public class GuiController implements Initializable {
             }
         }
 
+        // Initialize grid overlay for visual grid lines
+        initializeGridOverlay();
+
         // Initialize brick panel rectangles
         // brick.getBrickData() is [rows][cols] = [y][x]
         int brickHeight = brick.getBrickData().length;  // rows (y dimension)
@@ -658,6 +665,10 @@ public class GuiController implements Initializable {
                     rootPane.getChildren().add(ghostPanel);
                     ghostPanel.setVisible(ghostPieceEnabled);
                 }
+                if (gridOverlay != null && !rootPane.getChildren().contains(gridOverlay)) {
+                    rootPane.getChildren().add(gridOverlay);
+                    gridOverlay.setVisible(true);
+                }
             }
         }
 
@@ -679,6 +690,11 @@ public class GuiController implements Initializable {
                     }
                     if (ghostPanel != null) {
                         ghostPanel.setVisible(ghostPieceEnabled);
+                    }
+                    // Ensure grid overlay is visible and positioned
+                    if (gridOverlay != null) {
+                        gridOverlay.setVisible(true);
+                        positionGridOverlay();
                     }
                 }
             }
@@ -881,6 +897,9 @@ public class GuiController implements Initializable {
         
         // Update controls position
         positionControlsPanel();
+        
+        // Update grid overlay position
+        positionGridOverlay();
     }
 
     /**
@@ -935,6 +954,9 @@ public class GuiController implements Initializable {
         
         // Update controls position
         positionControlsPanel();
+        
+        // Update grid overlay position
+        positionGridOverlay();
     }
 
     /**
@@ -1028,7 +1050,7 @@ public class GuiController implements Initializable {
         for (int y = 0; y < brickHeight; y++) {
             for (int x = 0; x < brickWidth; x++) {
                 Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
-                // Set ghost color with opacity 0.3
+                // Set ghost color with improved visibility
                 Paint ghostColor = getGhostColor(brickData[y][x]);
                 rectangle.setFill(ghostColor);
                 rectangle.setArcHeight(9);
@@ -1038,6 +1060,115 @@ public class GuiController implements Initializable {
                 ghostPanel.add(rectangle, x, y);
             }
         }
+    }
+
+    /**
+     * Initializes the grid overlay with perfectly aligned grid lines.
+     * <p>
+     * Creates a Group overlay with vertical and horizontal lines
+     * that align perfectly with the game board cell boundaries.
+     * The grid overlay is positioned between the game board background
+     * and the ghost piece in the z-order.
+     * </p>
+     */
+    private void initializeGridOverlay() {
+        // Create grid overlay if it doesn't exist
+        if (gridOverlay == null) {
+            gridOverlay = new Group();
+            gridOverlay.setMouseTransparent(true); // Allow clicks to pass through
+            gridOverlay.setVisible(true);
+            gridOverlay.setViewOrder(-0.5); // Render above gamePanel but below ghost/brick panels
+
+            // Add grid overlay to scene root - use Platform.runLater to ensure scene is ready
+            javafx.application.Platform.runLater(() -> {
+                if (gameBoard != null && gameBoard.getScene() != null) {
+                    javafx.scene.Parent root = gameBoard.getScene().getRoot();
+                    if (root instanceof javafx.scene.layout.Pane) {
+                        javafx.scene.layout.Pane rootPane = (javafx.scene.layout.Pane) root;
+                        if (!rootPane.getChildren().contains(gridOverlay)) {
+                            rootPane.getChildren().add(gridOverlay);
+                            gridOverlay.setVisible(true);
+                            gridOverlay.toFront();
+                        }
+                    }
+                }
+            });
+        } else {
+            // Clear existing grid lines
+            gridOverlay.getChildren().clear();
+        }
+
+        // GridPane with hgap and vgap places cells with gaps between them
+        // Cell width including gap: BRICK_SIZE + CELL_GAP
+        // Total grid dimensions
+        double cellWidth = BRICK_SIZE + CELL_GAP;
+        double cellHeight = BRICK_SIZE + CELL_GAP;
+        double totalWidth = numberOfColumns * BRICK_SIZE + (numberOfColumns - 1) * CELL_GAP;
+        double totalHeight = numberOfRows * BRICK_SIZE + (numberOfRows - 1) * CELL_GAP;
+
+        // Draw vertical grid lines at column boundaries
+        // Lines should be at: 0, BRICK_SIZE, BRICK_SIZE+gap+BRICK_SIZE, etc.
+        for (int x = 0; x <= numberOfColumns; x++) {
+            Line verticalLine = new Line();
+            double xPos = x * cellWidth;
+            
+            verticalLine.setStartX(xPos);
+            verticalLine.setStartY(0);
+            verticalLine.setEndX(xPos);
+            verticalLine.setEndY(totalHeight);
+            verticalLine.setStroke(Color.web("#00ffff")); // Cyan grid lines matching the theme
+            verticalLine.setStrokeWidth(2.0); // Thicker lines for visibility
+            verticalLine.setOpacity(0.8); // More visible
+            
+            gridOverlay.getChildren().add(verticalLine);
+        }
+
+        // Draw horizontal grid lines at row boundaries
+        for (int y = 0; y <= numberOfRows; y++) {
+            Line horizontalLine = new Line();
+            double yPos = y * cellHeight;
+            
+            horizontalLine.setStartX(0);
+            horizontalLine.setStartY(yPos);
+            horizontalLine.setEndX(totalWidth);
+            horizontalLine.setEndY(yPos);
+            horizontalLine.setStroke(Color.web("#00ffff")); // Cyan grid lines matching the theme
+            horizontalLine.setStrokeWidth(2.0); // Thicker lines for visibility
+            horizontalLine.setOpacity(0.8); // More visible
+            
+            gridOverlay.getChildren().add(horizontalLine);
+        }
+
+        // Position the grid overlay exactly over the gamePanel
+        // Use Platform.runLater to ensure board is centered first
+        javafx.application.Platform.runLater(() -> {
+            positionGridOverlay();
+            if (gridOverlay != null) {
+                gridOverlay.setVisible(true);
+                gridOverlay.toFront();
+            }
+        });
+    }
+
+    /**
+     * Positions the grid overlay to align perfectly with the game board.
+     * <p>
+     * The grid overlay is positioned to match the gamePanel's position
+     * exactly, accounting for the BorderPane's border width.
+     * </p>
+     */
+    private void positionGridOverlay() {
+        if (gridOverlay == null || gameBoard == null) return;
+
+        // Account for BorderPane's border width (8px from CSS - NES style)
+        double borderWidth = 8.0;
+        
+        // Position grid overlay exactly over the gamePanel
+        double gridX = gameBoard.getLayoutX() + borderWidth;
+        double gridY = gameBoard.getLayoutY() + borderWidth;
+        
+        gridOverlay.setLayoutX(gridX);
+        gridOverlay.setLayoutY(gridY);
     }
 
     /**
@@ -1134,25 +1265,25 @@ public class GuiController implements Initializable {
      * Gets the ghost color for a given color value with dimmed transparency.
      * <p>
      * Returns a semi-transparent, dimmed version of the brick color to create
-     * the ghost piece effect. Uses 0.25 opacity for a subtle NES-style ghost.
+     * the ghost piece effect. Uses 0.5 opacity for better visibility.
      * </p>
      *
      * @param colorValue the color value (0-7) from the brick
-     * @return a Color with opacity 0.25 (dimmed), or TRANSPARENT if colorValue is 0
+     * @return a Color with opacity 0.5 (dimmed), or TRANSPARENT if colorValue is 0
      */
     private Paint getGhostColor(int colorValue) {
         if (colorValue == 0) {
             return Color.TRANSPARENT;
         }
 
-        // Get the base color and apply dimmed opacity (0.25 for subtle ghost effect)
+        // Get the base color and apply dimmed opacity (0.5 for more visible ghost effect)
         Color baseColor = (Color) getFillColor(colorValue);
-        // Dim the color slightly and reduce opacity for classic ghost piece look
+        // Dim the color slightly and reduce opacity for visible ghost piece look
         return new Color(
-            Math.max(0, baseColor.getRed() * 0.7),      // Dim red channel
-            Math.max(0, baseColor.getGreen() * 0.7),    // Dim green channel
-            Math.max(0, baseColor.getBlue() * 0.7),     // Dim blue channel
-            0.25                                         // Low opacity for transparency
+            Math.max(0, baseColor.getRed() * 0.85),      // Less dimming for red channel
+            Math.max(0, baseColor.getGreen() * 0.85),    // Less dimming for green channel
+            Math.max(0, baseColor.getBlue() * 0.85),     // Less dimming for blue channel
+            0.5                                          // Higher opacity for better visibility
         );
     }
 

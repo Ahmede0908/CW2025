@@ -141,6 +141,9 @@ public class GuiController implements Initializable {
     private boolean ghostPieceEnabled = true;
     private boolean hardDropEnabled = true;
     private long difficultyBaseSpeed = 400; // Default NORMAL speed
+    
+    // Music manager
+    private MusicManager musicManager;
 
     private final BooleanProperty isGameOver = new SimpleBooleanProperty();
 
@@ -180,6 +183,9 @@ public class GuiController implements Initializable {
 
         // Initialize pause overlay
         initializePauseOverlay();
+        
+        // Initialize music manager
+        musicManager = MusicManager.getInstance();
 
         // Initialize game over panel - use FXML injected one if available, otherwise create new
         if (gameOverPanelFXML != null) {
@@ -708,6 +714,12 @@ public class GuiController implements Initializable {
         ));
         timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
+        
+        // Start background music (loops continuously)
+        // Change "music/game_music.mp3" to your actual music file path
+        if (musicManager != null) {
+            musicManager.playMusic("music/game_music.wav", true);
+        }
     }
 
     /**
@@ -1994,6 +2006,10 @@ public class GuiController implements Initializable {
      */
     public void gameOver() {
         timeLine.stop();
+        // Stop music when game over
+        if (musicManager != null) {
+            musicManager.stopMusic();
+        }
         if (gameOverPanel != null) {
             gameOverPanel.setVisible(true);
         }
@@ -2027,6 +2043,11 @@ public class GuiController implements Initializable {
      */
     public void newGame(ActionEvent actionEvent) {
         timeLine.stop(); // stop old timeline
+        
+        // Stop old music
+        if (musicManager != null) {
+            musicManager.stopMusic();
+        }
 
         if (gameOverPanel != null) {
             gameOverPanel.setVisible(false);
@@ -2051,6 +2072,11 @@ public class GuiController implements Initializable {
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))));
         timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
+        
+        // Start background music for new game
+        if (musicManager != null) {
+            musicManager.playMusic("music/game_music.wav", true);
+        }
 
         isPause.set(false);
         isGameOver.set(false);
@@ -2166,6 +2192,11 @@ public class GuiController implements Initializable {
         if (timeLine != null) {
             timeLine.stop();
         }
+        
+        // Stop and restart music
+        if (musicManager != null) {
+            musicManager.stopMusic();
+        }
 
         // Reset pause state
         isPause.setValue(Boolean.FALSE);
@@ -2225,6 +2256,11 @@ public class GuiController implements Initializable {
             ));
             timeLine.setCycleCount(Timeline.INDEFINITE);
             timeLine.play();
+        }
+        
+        // Restart background music
+        if (musicManager != null) {
+            musicManager.playMusic("music/game_music.wav", true);
         }
 
         // Request focus for keyboard input - use Platform.runLater to prevent fullscreen exit

@@ -28,6 +28,7 @@ public class GlobalSettings {
     private static final String DEFAULT_THEME = "classic"; // Always use classic theme
     private static final String DEFAULT_DIFFICULTY = "NORMAL";
     private static final double DEFAULT_MUSIC_VOLUME = 0.7; // 0.0 to 1.0
+    private static final int DEFAULT_HIGH_SCORE = 0;
 
     // Allowed values
     private static final String[] ALLOWED_THEMES = {"neon", "classic", "gameboy"};
@@ -42,6 +43,7 @@ public class GlobalSettings {
     private String theme = DEFAULT_THEME;
     private String difficulty = DEFAULT_DIFFICULTY;
     private double musicVolume = DEFAULT_MUSIC_VOLUME;
+    private int highScore = DEFAULT_HIGH_SCORE;
 
     // Singleton instance
     private static GlobalSettings instance;
@@ -115,6 +117,16 @@ public class GlobalSettings {
                 musicVolume = DEFAULT_MUSIC_VOLUME;
             }
 
+            // Load high score
+            String highScoreStr = props.getProperty("highScore", String.valueOf(DEFAULT_HIGH_SCORE));
+            try {
+                int highScoreValue = Integer.parseInt(highScoreStr);
+                // High score must be non-negative
+                highScore = Math.max(0, highScoreValue);
+            } catch (NumberFormatException e) {
+                highScore = DEFAULT_HIGH_SCORE;
+            }
+
         } catch (IOException e) {
             System.err.println("Error loading settings: " + e.getMessage());
             // Use defaults on error
@@ -134,6 +146,7 @@ public class GlobalSettings {
         props.setProperty("theme", DEFAULT_THEME); // Always save classic theme
         props.setProperty("difficulty", difficulty);
         props.setProperty("musicVolume", String.valueOf(musicVolume));
+        props.setProperty("highScore", String.valueOf(highScore));
 
         try (FileOutputStream fos = new FileOutputStream(SETTINGS_FILE)) {
             props.store(fos, "TetrisFX Game Settings");
@@ -227,6 +240,17 @@ public class GlobalSettings {
     public void setMusicVolume(double musicVolume) {
         // Clamp between 0.0 and 1.0
         this.musicVolume = Math.max(0.0, Math.min(1.0, musicVolume));
+    }
+
+    public int getHighScore() {
+        return highScore;
+    }
+
+    public void setHighScore(int highScore) {
+        // High score must be non-negative
+        this.highScore = Math.max(0, highScore);
+        // Automatically save when high score is updated
+        saveSettings();
     }
 
     /**

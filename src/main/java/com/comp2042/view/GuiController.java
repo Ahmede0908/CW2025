@@ -197,13 +197,6 @@ public class GuiController implements Initializable {
             }
         }
         
-        // Set viewOrder on groupNotification to ensure game over panel appears on top
-        // Use -1500 to be above blocks/grid but below pause overlay (which is -1000)
-        // Since pause overlay is hidden on game over, this ensures game over is visible
-        if (groupNotification != null) {
-            groupNotification.setViewOrder(-1500.0);
-        }
-        
         // Ensure controls panel is visible
         if (controlsContainer != null) {
             controlsContainer.setVisible(true);
@@ -650,11 +643,6 @@ public class GuiController implements Initializable {
             if (pauseOverlay != null && pauseOverlay.isVisible()) {
                 pauseOverlay.setViewOrder(-1000.0);
                 pauseOverlay.toFront();
-            }
-            // Ensure game over panel stays on top if visible
-            if (groupNotification != null && gameOverPanel != null && gameOverPanel.isVisible()) {
-                groupNotification.setViewOrder(-1500.0);
-                groupNotification.toFront();
             }
         }
 
@@ -1242,11 +1230,6 @@ public class GuiController implements Initializable {
             pauseOverlay.setViewOrder(-1000.0);
             pauseOverlay.toFront();
         }
-        // Ensure game over panel stays on top if visible
-        if (groupNotification != null && gameOverPanel != null && gameOverPanel.isVisible()) {
-            groupNotification.setViewOrder(-1500.0);
-            groupNotification.toFront();
-        }
     }
 
     /**
@@ -1745,11 +1728,6 @@ public class GuiController implements Initializable {
                 brickPanel.setVisible(true);
                 brickPanel.setViewOrder(-1.0); // Negative = render on top
                 brickPanel.toFront(); // Force to front of z-order
-                // Ensure game over panel stays on top if visible
-                if (groupNotification != null && gameOverPanel != null && gameOverPanel.isVisible()) {
-                    groupNotification.setViewOrder(-1500.0);
-                    groupNotification.toFront();
-                }
             }
 
             // Update brick panel position using clean coordinate translation
@@ -1821,11 +1799,6 @@ public class GuiController implements Initializable {
                 if (pauseOverlay != null && pauseOverlay.isVisible()) {
                     pauseOverlay.setViewOrder(-1000.0);
                     pauseOverlay.toFront();
-                }
-                // Ensure game over panel stays on top if visible
-                if (groupNotification != null && gameOverPanel != null && gameOverPanel.isVisible()) {
-                    groupNotification.setViewOrder(-1500.0);
-                    groupNotification.toFront();
                 }
             }
         }

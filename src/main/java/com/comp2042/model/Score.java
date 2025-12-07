@@ -1,5 +1,6 @@
 package com.comp2042.model;
 
+import com.comp2042.view.GlobalSettings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
@@ -32,15 +33,32 @@ public final class Score {
 
     private final IntegerProperty currentScore = new SimpleIntegerProperty(0);
     private final IntegerProperty totalLines = new SimpleIntegerProperty(0);
-    private final IntegerProperty highScore = new SimpleIntegerProperty(0);
+    private final IntegerProperty highScore;
     private final IntegerProperty currentLevel = new SimpleIntegerProperty(1);
     
     // Tracking fields (optional, for debugging/statistics)
     private int softDropPoints = 0;
     private int hardDropPoints = 0;
+    
+    // GlobalSettings reference for persistence
+    private final GlobalSettings globalSettings;
 
     /** Number of lines required per level increase. */
     private static final int LINES_PER_LEVEL = 10;
+    
+    /**
+     * Constructs a new Score object with high score loaded from GlobalSettings.
+     * <p>
+     * The high score is persisted across game sessions and will be restored
+     * from the settings file when a new Score is created.
+     * </p>
+     */
+    public Score() {
+        this.globalSettings = GlobalSettings.getInstance();
+        // Load persisted high score from GlobalSettings
+        int persistedHighScore = globalSettings.getHighScore();
+        this.highScore = new SimpleIntegerProperty(persistedHighScore);
+    }
 
     /**
      * Returns the current score property for JavaFX binding.
@@ -158,7 +176,10 @@ public final class Score {
         currentScore.setValue(currentScore.getValue() + points);
         // Update high score if current score exceeds it
         if (currentScore.get() > highScore.get()) {
-            highScore.setValue(currentScore.get());
+            int newHighScore = currentScore.get();
+            highScore.setValue(newHighScore);
+            // Persist high score to GlobalSettings
+            globalSettings.setHighScore(newHighScore);
         }
     }
 
@@ -291,7 +312,8 @@ public final class Score {
      * Resets the current score, total lines, and level to initial values.
      * <p>
      * This method is called when starting a new game. The high score is
-     * preserved across games. Level resets to 1. Tracking fields are also reset.
+     * preserved across games and loaded from GlobalSettings. Level resets to 1. 
+     * Tracking fields are also reset.
      * </p>
      */
     public void reset() {
@@ -301,6 +323,9 @@ public final class Score {
         softDropPoints = 0;
         hardDropPoints = 0;
         // High score is NOT reset - it persists across games
+        // Reload high score from GlobalSettings in case it was updated elsewhere
+        int persistedHighScore = globalSettings.getHighScore();
+        highScore.setValue(persistedHighScore);
     }
 
     /**

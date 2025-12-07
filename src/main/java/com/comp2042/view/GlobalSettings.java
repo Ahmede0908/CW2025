@@ -27,6 +27,7 @@ public class GlobalSettings {
     private static final boolean DEFAULT_HARD_DROP_ENABLED = true;
     private static final String DEFAULT_THEME = "classic"; // Always use classic theme
     private static final String DEFAULT_DIFFICULTY = "NORMAL";
+    private static final double DEFAULT_MUSIC_VOLUME = 0.7; // 0.0 to 1.0
 
     // Allowed values
     private static final String[] ALLOWED_THEMES = {"neon", "classic", "gameboy"};
@@ -40,6 +41,7 @@ public class GlobalSettings {
     private boolean hardDropEnabled = DEFAULT_HARD_DROP_ENABLED;
     private String theme = DEFAULT_THEME;
     private String difficulty = DEFAULT_DIFFICULTY;
+    private double musicVolume = DEFAULT_MUSIC_VOLUME;
 
     // Singleton instance
     private static GlobalSettings instance;
@@ -103,6 +105,16 @@ public class GlobalSettings {
                 difficulty = DEFAULT_DIFFICULTY;
             }
 
+            // Load music volume
+            String volumeStr = props.getProperty("musicVolume", String.valueOf(DEFAULT_MUSIC_VOLUME));
+            try {
+                double volumeValue = Double.parseDouble(volumeStr);
+                // Clamp between 0.0 and 1.0
+                musicVolume = Math.max(0.0, Math.min(1.0, volumeValue));
+            } catch (NumberFormatException e) {
+                musicVolume = DEFAULT_MUSIC_VOLUME;
+            }
+
         } catch (IOException e) {
             System.err.println("Error loading settings: " + e.getMessage());
             // Use defaults on error
@@ -121,6 +133,7 @@ public class GlobalSettings {
         props.setProperty("hardDropEnabled", String.valueOf(hardDropEnabled));
         props.setProperty("theme", DEFAULT_THEME); // Always save classic theme
         props.setProperty("difficulty", difficulty);
+        props.setProperty("musicVolume", String.valueOf(musicVolume));
 
         try (FileOutputStream fos = new FileOutputStream(SETTINGS_FILE)) {
             props.store(fos, "TetrisFX Game Settings");
@@ -205,6 +218,15 @@ public class GlobalSettings {
         if (isValidDifficulty(difficulty)) {
             this.difficulty = difficulty;
         }
+    }
+
+    public double getMusicVolume() {
+        return musicVolume;
+    }
+
+    public void setMusicVolume(double musicVolume) {
+        // Clamp between 0.0 and 1.0
+        this.musicVolume = Math.max(0.0, Math.min(1.0, musicVolume));
     }
 
     /**

@@ -28,6 +28,9 @@ public class MenuController {
         btnSettings.setOnAction(e -> SceneManager.showSettings());
         btnExit.setOnAction(e -> SceneManager.exitGame());
         
+        // Start background music when menu loads
+        startBackgroundMusic();
+        
         // Add F11 key handler to toggle fullscreen
         if (menuContainer != null && menuContainer.getScene() != null) {
             menuContainer.getScene().setOnKeyPressed(this::handleKeyPress);
@@ -132,5 +135,21 @@ public class MenuController {
                 menuContainer.setLayoutY(centerY);
             }
         });
+    }
+    
+    /**
+     * Starts background music when the menu loads.
+     * Music will continue playing when entering the game.
+     */
+    private void startBackgroundMusic() {
+        MusicManager musicManager = MusicManager.getInstance();
+        if (musicManager != null && !musicManager.isPlaying()) {
+            // Get volume from settings
+            GlobalSettings settings = GlobalSettings.loadSettings();
+            musicManager.setVolume(settings.getMusicVolume());
+            
+            // Start music (loops continuously)
+            musicManager.playMusic("music/game_music.wav", true);
+        }
     }
 }

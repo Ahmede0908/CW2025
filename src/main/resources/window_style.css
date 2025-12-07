@@ -286,3 +286,42 @@
     -fx-text-fill: #ffffff;
     -fx-padding: 1px 0px;
 }
+
+/* ============================================
+   VOLUME SLIDER - Retro Style
+   ============================================ */
+.slider {
+    -fx-control-inner-background: #1a1a1a;
+}
+
+.slider .track {
+    -fx-background-color: #2a2a2a;
+    -fx-background-radius: 5px;
+    -fx-pref-height: 8px;
+}
+
+.slider .thumb {
+    -fx-background-color: #00ffff;
+    -fx-background-radius: 5px;
+    -fx-pref-width: 16px;
+    -fx-pref-height: 16px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 255, 255, 0.6), 3, 0, 0, 0);
+}
+
+.slider .thumb:hover {
+    -fx-background-color: #00ccff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 255, 255, 0.8), 4, 0, 0, 0);
+}
+
+.slider .thumb:pressed {
+    -fx-background-color: #ffffff;
+}
+
+.slider .axis .axis-label {
+    -fx-text-fill: #00ffff;
+}
+
+.slider .axis .axis-tick-mark {
+    -fx-stroke: #00ffff;
+    -fx-stroke-width: 1px;
+}

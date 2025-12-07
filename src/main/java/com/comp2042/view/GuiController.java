@@ -715,9 +715,12 @@ public class GuiController implements Initializable {
         timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
         
-        // Start background music (loops continuously)
-        // Change "music/game_music.mp3" to your actual music file path
-        if (musicManager != null) {
+        // Start background music if not already playing (music may already be playing from menu)
+        if (musicManager != null && !musicManager.isPlaying()) {
+            // Apply volume from settings
+            if (globalSettings != null) {
+                musicManager.setVolume(globalSettings.getMusicVolume());
+            }
             musicManager.playMusic("music/game_music.wav", true);
         }
     }
@@ -2073,9 +2076,18 @@ public class GuiController implements Initializable {
         timeLine.setCycleCount(Timeline.INDEFINITE);
         timeLine.play();
         
-        // Start background music for new game
-        if (musicManager != null) {
+        // Start background music for new game if not already playing
+        if (musicManager != null && !musicManager.isPlaying()) {
+            // Apply volume from settings
+            if (globalSettings != null) {
+                musicManager.setVolume(globalSettings.getMusicVolume());
+            }
             musicManager.playMusic("music/game_music.wav", true);
+        } else if (musicManager != null) {
+            // Update volume if music is already playing
+            if (globalSettings != null) {
+                musicManager.setVolume(globalSettings.getMusicVolume());
+            }
         }
 
         isPause.set(false);
@@ -2258,9 +2270,18 @@ public class GuiController implements Initializable {
             timeLine.play();
         }
         
-        // Restart background music
-        if (musicManager != null) {
+        // Restart background music if not already playing
+        if (musicManager != null && !musicManager.isPlaying()) {
+            // Apply volume from settings
+            if (globalSettings != null) {
+                musicManager.setVolume(globalSettings.getMusicVolume());
+            }
             musicManager.playMusic("music/game_music.wav", true);
+        } else if (musicManager != null) {
+            // Update volume if music is already playing
+            if (globalSettings != null) {
+                musicManager.setVolume(globalSettings.getMusicVolume());
+            }
         }
 
         // Request focus for keyboard input - use Platform.runLater to prevent fullscreen exit

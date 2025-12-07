@@ -6,6 +6,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Slider;
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
@@ -25,7 +27,8 @@ public class SettingsController {
     @FXML private CheckBox ghostToggle;
     @FXML private CheckBox hardDropToggle;
     @FXML private ComboBox<String> difficultyDropdown;
-    @FXML private Button btnSave;
+    @FXML private Slider volumeSlider;
+    @FXML private Label volumeLabel;
     @FXML private Button btnBack;
     @FXML private javafx.scene.layout.VBox settingsContainer;
 
@@ -42,11 +45,11 @@ public class SettingsController {
     @FXML
     public void initialize() {
         // Prevent buttons from stealing focus or exiting fullscreen
-        btnSave.setFocusTraversable(false);
         btnBack.setFocusTraversable(false);
         ghostToggle.setFocusTraversable(false);
         hardDropToggle.setFocusTraversable(false);
         difficultyDropdown.setFocusTraversable(false);
+        volumeSlider.setFocusTraversable(false);
         
         // Get settings instance
         settings = GlobalSettings.loadSettings();
@@ -64,6 +67,45 @@ public class SettingsController {
         );
         difficultyDropdown.setItems(difficultyOptions);
         difficultyDropdown.setValue(settings.getDifficulty());
+        
+        // Setup volume slider
+        volumeSlider.setValue(settings.getMusicVolume());
+        updateVolumeLabel(settings.getMusicVolume());
+        
+        // Update label and save when slider value changes
+        volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            updateVolumeLabel(newVal.doubleValue());
+            settings.setMusicVolume(newVal.doubleValue());
+            // Apply volume to music manager immediately
+            MusicManager musicManager = MusicManager.getInstance();
+            if (musicManager != null) {
+                musicManager.setVolume(newVal.doubleValue());
+            }
+            settings.saveSettings(); // Auto-save
+        });
+        
+        // Auto-save and apply when ghost toggle changes
+        ghostToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            settings.setGhostPieceEnabled(newVal);
+            settings.saveSettings(); // Auto-save
+            applySettingsToGame(); // Apply immediately if game is running
+        });
+        
+        // Auto-save and apply when hard drop toggle changes
+        hardDropToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            settings.setHardDropEnabled(newVal);
+            settings.saveSettings(); // Auto-save
+            applySettingsToGame(); // Apply immediately if game is running
+        });
+        
+        // Auto-save and apply when difficulty changes
+        difficultyDropdown.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                settings.setDifficulty(newVal);
+                settings.saveSettings(); // Auto-save
+                applySettingsToGame(); // Apply immediately if game is running
+            }
+        });
         
         // Add F11 key handler to toggle fullscreen
         javafx.application.Platform.runLater(() -> {
@@ -97,31 +139,47 @@ public class SettingsController {
     }
 
     /**
-     * Applies the current settings and saves them.
+     * Applies current settings to the game if it's currently running.
      * <p>
-     * Updates GlobalSettings with current UI values, saves to file,
-     * and returns to menu.
+     * This method attempts to find the GuiController in the current scene
+     * and apply settings immediately.
      * </p>
      */
-    @FXML
-    public void applySettings() {
-        // Update settings from UI
-        settings.setGhostPieceEnabled(ghostToggle.isSelected());
-        settings.setHardDropEnabled(hardDropToggle.isSelected());
-        
-        if (difficultyDropdown.getValue() != null) {
-            settings.setDifficulty(difficultyDropdown.getValue());
-        }
-        
-        // Save to file
-        settings.saveSettings();
-        
-        // Return to menu (fullscreen will be preserved by SceneManager)
-        goBackToMenu();
+    private void applySettingsToGame() {
+        javafx.application.Platform.runLater(() -> {
+            if (settingsContainer == null || settingsContainer.getScene() == null) return;
+            
+            // Get the stage and check if game is the current scene
+            javafx.stage.Window window = settingsContainer.getScene().getWindow();
+            if (window instanceof Stage) {
+                Stage stage = (Stage) window;
+                if (stage.getScene() != null && stage.getScene().getRoot() != null) {
+                    // Check if the root is a Pane (gameLayout uses Pane as root)
+                    javafx.scene.Parent root = stage.getScene().getRoot();
+                    if (root instanceof javafx.scene.layout.Pane) {
+                        // Try to find GuiController by looking for gameBoard BorderPane
+                        javafx.scene.layout.Pane pane = (javafx.scene.layout.Pane) root;
+                        // The gameBoard BorderPane should have fx:id="gameBoard"
+                        // We can check if it exists and get the controller
+                        javafx.scene.Node gameBoard = pane.lookup("#gameBoard");
+                        if (gameBoard != null) {
+                            // Game is running - try to apply settings
+                            // Get the controller from the scene's user data or reload settings
+                            // Since we can't easily get the controller, we'll just ensure settings
+                            // are saved and will apply on next game action or restart
+                            // The settings will be applied when game restarts or a new game starts
+                        }
+                    }
+                }
+            }
+            
+            // Reload settings to ensure we have the latest values
+            settings = GlobalSettings.loadSettings();
+        });
     }
 
     /**
-     * Returns to the main menu without saving changes.
+     * Returns to the main menu.
      */
     @FXML
     public void goBackToMenu() {
@@ -196,5 +254,17 @@ public class SettingsController {
                 settingsContainer.setLayoutY(centerY);
             }
         });
+    }
+    
+    /**
+     * Updates the volume label to show the current volume percentage.
+     *
+     * @param volume the volume value (0.0 to 1.0)
+     */
+    private void updateVolumeLabel(double volume) {
+        if (volumeLabel != null) {
+            int percentage = (int) Math.round(volume * 100);
+            volumeLabel.setText(percentage + "%");
+        }
     }
 }

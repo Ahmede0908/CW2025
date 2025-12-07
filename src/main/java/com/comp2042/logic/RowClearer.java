@@ -27,7 +27,7 @@ public class RowClearer {
      * @return a ClearRow object containing:
      *         - number of lines removed
      *         - updated board matrix with cleared rows removed and remaining rows collapsed
-     *         - score bonus calculated as 50 * (linesRemoved)^2
+     *         - score bonus (calculated elsewhere based on classic Tetris rules)
      */
     public static ClearRow clear(int[][] board) {
         int rows = board.length;
@@ -65,8 +65,9 @@ public class RowClearer {
             }
         }
 
-        // Calculate score bonus: 50 * (number of lines removed)^2
-        int scoreBonus = 50 * clearedRows.size() * clearedRows.size();
+        // Score bonus is now calculated in SimpleBoard.clearRows() based on level
+        // Return 0 here - the actual scoring follows classic Tetris rules
+        int scoreBonus = 0;
         
         return new ClearRow(clearedRows.size(), newBoard, scoreBonus);
     }

@@ -11,7 +11,11 @@ import com.comp2042.logic.MatrixOperations;
  * the score bonus calculated based on the number of cleared rows.
  * </p>
  * <p>
- * The score bonus formula is: 50 * (linesRemoved)^2
+ * Score bonus is calculated in SimpleBoard.clearRows() using classic Tetris rules:
+ * - 1 line: 40 × (level + 1)
+ * - 2 lines: 100 × (level + 1)
+ * - 3 lines: 300 × (level + 1)
+ * - 4 lines: 1200 × (level + 1)
  * </p>
  * <p>
  * All data returned by getter methods are defensive copies to maintain
@@ -64,18 +68,14 @@ public final class ClearRow {
     }
 
     /**
-     * Returns the score bonus calculated from the cleared rows.
+     * Returns the score bonus (legacy field, now always 0).
      * <p>
-     * The bonus is calculated as 50 * (linesRemoved)^2. For example:
-     * <ul>
-     *   <li>1 line: 50 points</li>
-     *   <li>2 lines: 200 points</li>
-     *   <li>3 lines: 450 points</li>
-     *   <li>4 lines: 800 points</li>
-     * </ul>
+     * Score is now calculated in SimpleBoard.clearRows() using classic Tetris rules
+     * based on the current level. This field is kept for backward compatibility
+     * but should not be used for scoring calculations.
      * </p>
      *
-     * @return the score bonus to add to the player's score
+     * @return 0 (score is calculated elsewhere)
      */
     public int getScoreBonus() {
         return scoreBonus;

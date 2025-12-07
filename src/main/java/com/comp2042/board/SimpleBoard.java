@@ -334,10 +334,41 @@ public class SimpleBoard implements Board {
         ClearRow clearRow = RowClearer.clear(currentGameMatrix);
         currentGameMatrix = clearRow.getNewMatrix();
         
-        // Update score: add lines cleared and score bonus
+        // Update score using Tetris Guideline scoring
         if (clearRow.getLinesRemoved() > 0) {
-            score.addLines(clearRow.getLinesRemoved());
-            score.addScore(clearRow.getScoreBonus());
+            int linesCleared = clearRow.getLinesRemoved();
+            
+            // Get level before clearing (for scoring calculation)
+            int levelBeforeClear = score.getCurrentLevel();
+            
+            // This will:
+            // 1. Add lines to total
+            // 2. Update level (level = 1 + totalLines / 10)
+            // 3. Calculate and award points based on Tetris Guideline
+            score.addLineClear(linesCleared);
+            
+            // Calculate the score bonus for display (Tetris Guideline)
+            int lineClearScore;
+            switch (linesCleared) {
+                case 1:
+                    lineClearScore = 100 * levelBeforeClear; // Single: 100 × level
+                    break;
+                case 2:
+                    lineClearScore = 300 * levelBeforeClear; // Double: 300 × level
+                    break;
+                case 3:
+                    lineClearScore = 500 * levelBeforeClear; // Triple: 500 × level
+                    break;
+                case 4:
+                    lineClearScore = 800 * levelBeforeClear; // Tetris: 800 × level
+                    break;
+                default:
+                    lineClearScore = 800 * levelBeforeClear;
+                    break;
+            }
+            
+            // Create a new ClearRow with the actual score bonus for display purposes
+            clearRow = new ClearRow(clearRow.getLinesRemoved(), clearRow.getNewMatrix(), lineClearScore);
         }
         
         return clearRow;
@@ -364,12 +395,15 @@ public class SimpleBoard implements Board {
      *   <li>Merges the brick into the board</li>
      *   <li>Clears any completed rows</li>
      *   <li>Spawns a new brick</li>
-     *   <li>Calculates and applies hard drop bonus (2 points per row dropped)</li>
+     *   <li>Calculates and applies hard drop bonus (2 points per cell/row dropped)</li>
      * </ol>
      * </p>
      * <p>
      * Coordinate system: x = column, y = row. The brick is moved from its
      * current Y position to the lowest valid Y position without collision.
+     * </p>
+     * <p>
+     * Tetris Guideline: Awards +2 points per cell (row) moved down.
      * </p>
      *
      * @return HardDropResult containing the final ViewData, ClearRow result,
@@ -389,8 +423,8 @@ public class SimpleBoard implements Board {
         }
         // dropY is now the lowest valid position
 
-        // Calculate number of rows dropped
-        int rowsDropped = dropY - currentY;
+        // Calculate number of cells (rows) dropped
+        int cellsDropped = dropY - currentY;
 
         // Move the brick to the drop position
         currentOffset = new Point(currentX, dropY);
@@ -401,10 +435,9 @@ public class SimpleBoard implements Board {
         // Clear rows and get the result
         ClearRow clearRow = clearRows();
 
-        // Add hard drop bonus: 2 points per row dropped
-        if (rowsDropped > 0) {
-            int hardDropBonus = rowsDropped * 2;
-            score.addScore(hardDropBonus);
+        // Tetris Guideline: Award +2 points per cell moved down
+        if (cellsDropped > 0) {
+            score.addHardDropPoints(cellsDropped);
         }
 
         // Spawn new brick (createNewBrick returns true if game over)
@@ -413,7 +446,7 @@ public class SimpleBoard implements Board {
         // Get the updated view data (after new brick spawn)
         ViewData viewData = getViewData();
 
-        return new HardDropResult(viewData, clearRow, rowsDropped, gameOver);
+        return new HardDropResult(viewData, clearRow, cellsDropped, gameOver);
     }
 
     /**

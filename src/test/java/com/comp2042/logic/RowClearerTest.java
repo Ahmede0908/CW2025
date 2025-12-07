@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test suite for RowClearer utility class.
- * Tests row detection, removal, and score bonus calculation.
+ * Tests row detection and removal. Score bonus is calculated in SimpleBoard.clearRows().
  */
 @DisplayName("RowClearer Tests")
 class RowClearerTest {
@@ -29,7 +29,7 @@ class RowClearerTest {
 
         // Assert
         assertEquals(1, result.getLinesRemoved(), "Should remove 1 line");
-        assertEquals(50, result.getScoreBonus(), "Score bonus should be 50 for 1 line");
+        assertEquals(0, result.getScoreBonus(), "Score bonus is now calculated in SimpleBoard.clearRows()");
 
         int[][] expected = {
                 {0, 0, 0, 0},
@@ -58,7 +58,7 @@ class RowClearerTest {
 
         // Assert
         assertEquals(2, result.getLinesRemoved(), "Should remove 2 lines");
-        assertEquals(200, result.getScoreBonus(), "Score bonus should be 200 for 2 lines (50*2^2)");
+        assertEquals(0, result.getScoreBonus(), "Score bonus is now calculated in SimpleBoard.clearRows()");
 
         int[][] expected = {
                 {0, 0, 0, 0},
@@ -114,7 +114,7 @@ class RowClearerTest {
 
         // Assert
         assertEquals(3, result.getLinesRemoved(), "Should remove 3 lines");
-        assertEquals(450, result.getScoreBonus(), "Score bonus should be 450 (50*3^2)");
+        assertEquals(0, result.getScoreBonus(), "Score bonus is now calculated in SimpleBoard.clearRows()");
 
         int[][] expected = {
                 {0, 0, 0},
@@ -196,8 +196,3 @@ class RowClearerTest {
         assertArrayEquals(expected, result.getNewMatrix());
     }
 }
-
-
-
-
-

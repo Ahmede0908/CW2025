@@ -142,7 +142,8 @@ public class GameController implements InputEventListener {
             }
         } else {
             if (event.getEventSource() == EventSource.USER) {
-                board.getScore().addScore(1);
+                // Tetris Guideline: Soft drop awards +1 point per cell moved down manually
+                board.getScore().addSoftDropPoints(1);
             }
         }
 
